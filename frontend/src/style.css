@@ -1,0 +1,145 @@
+/* 引入 Yozai 字体 */
+@import url("https://cdn.jsdelivr.net/npm/cn-fontsource-yozai/font.css");
+
+@import "tailwindcss";
+
+
+
+@theme {
+  --color-primary: #3eaf7c;
+  --color-secondary: #4CAF50;
+  --color-accent: #81C784;
+  --color-light: #F1F8E9;
+  --color-dark: #1B5E20;
+  
+  /* 深色主题变量 */
+  --color-night-bg: #1a1a1a;
+  --color-night-text: #e0e0e0;
+  --color-night-control-bg: #2d2d2d;
+  --color-night-border: #404040;
+  
+  /* 护眼主题变量 */
+  --color-eye-protect-bg: #c7edcc;
+  --color-eye-protect-text: #333333;
+  --color-eye-protect-control-bg: #b3e5cc;
+  --color-eye-protect-border: #81c784;
+
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* 深色主题 */
+.night {
+  background-color: var(--color-night-bg);
+  color: var(--color-night-text);
+}
+
+.night .theme-bg {
+  background-color: var(--color-night-bg);
+}
+
+.night .theme-text {
+  color: var(--color-night-text);
+}
+
+.night .theme-control-bg {
+  background-color: var(--color-night-control-bg);
+}
+
+.night .theme-border {
+  border-color: var(--color-night-border);
+}
+
+/* 护眼主题 */
+.eye-protect {
+  background-color: var(--color-eye-protect-bg);
+  color: var(--color-eye-protect-text);
+}
+
+.eye-protect .theme-bg {
+  background-color: var(--color-eye-protect-bg);
+}
+
+.eye-protect .theme-text {
+  color: var(--color-eye-protect-text);
+}
+
+.eye-protect .theme-control-bg {
+  background-color: var(--color-eye-protect-control-bg);
+}
+
+.eye-protect .theme-border {
+  border-color: var(--color-eye-protect-border);
+}
+
+/* 滚动条美化 */
+/* WebKit浏览器 (Chrome, Safari) */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 2px;
+  transition: background 0.3s ease;
+}
+
+/* 当鼠标悬停在滚动区域或正在滚动时，显示滚动条 */
+:hover::-webkit-scrollbar-thumb,
+*:active::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* 滚动条滑块悬停效果 */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+  width: 6px;
+  height: 6px;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+
+/* 当鼠标悬停在元素上时，Firefox显示滚动条 */
+:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* 深色主题下的滚动条 */
+.night :hover::-webkit-scrollbar-thumb,
+.night *:active::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.night ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.night:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* 护眼主题下的滚动条 */
+.eye-protect :hover::-webkit-scrollbar-thumb,
+.eye-protect *:active::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.eye-protect ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.eye-protect:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
