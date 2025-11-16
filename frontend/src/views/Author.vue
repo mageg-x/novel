@@ -1,7 +1,8 @@
 <template>
     <div class="flex min-h-screen bg-gray-50">
         <!-- 侧边导航栏 -->
-        <div class="w-64 bg-gray-800 text-white shadow-lg fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-50" :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
+        <div class="w-64 bg-gray-800 text-white shadow-lg fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-50"
+            :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
             <div class="h-16 flex items-center justify-center bg-gray-900">
                 <i class="fas fa-book text-primary text-2xl mr-2"></i>
                 <span class="text-xl font-bold">作者后台</span>
@@ -18,12 +19,14 @@
         </div>
 
         <!-- 遮罩层 -->
-        <div v-if="isSidebarOpen" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" @click="isSidebarOpen = false"></div>
+        <div v-if="isSidebarOpen" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            @click="isSidebarOpen = false"></div>
 
         <!-- 主内容区 -->
         <div class="flex-1 flex flex-col overflow-hidden" :class="isSidebarOpen ? 'ml-0 md:ml-64' : 'ml-0 md:ml-64'">
             <!-- 顶部导航 -->
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 shadow-sm">
+            <header
+                class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 shadow-sm">
                 <!-- 移动端菜单按钮 -->
                 <button class="md:hidden text-gray-600 mr-3" @click="isSidebarOpen = true">
                     <i class="fas fa-bars text-xl"></i>
@@ -32,7 +35,8 @@
                 <div class="flex items-center">
                     <img v-if="user.avatar" :src="user.avatar" :alt="user.nickname"
                         class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 md:mr-3 object-cover">
-                    <div v-else class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary flex items-center justify-center text-white mr-2 md:mr-3">
+                    <div v-else
+                        class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary flex items-center justify-center text-white mr-2 md:mr-3">
                         <i class="fas fa-user text-sm md:text-base"></i>
                     </div>
                     <span class="text-gray-700 text-sm md:text-base">{{ user.nickname || user.username }}</span>
@@ -55,47 +59,69 @@
                         <table class="min-w-full">
                             <thead>
                                 <tr class="bg-gray-50">
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm">
                                         书名</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm hidden md:table-cell">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm hidden md:table-cell">
                                         分类</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm hidden sm:table-cell">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm hidden sm:table-cell">
                                         点击量</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm hidden md:table-cell">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm hidden md:table-cell">
                                         昨日订阅</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm hidden lg:table-cell">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm hidden lg:table-cell">
                                         更新时间</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm hidden sm:table-cell">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm hidden sm:table-cell">
                                         总字数</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm">
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:text-sm">
                                         操作</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <template v-if="books.length > 0">
-                                    <tr v-for="book in books" :key="book.id" class="hover:bg-gray-50 transition-colors">
+                                    <tr v-for="book in paginatedBooks" :key="book.id"
+                                        class="hover:bg-gray-50 transition-colors">
                                         <td class="px-4 py-3 whitespace-nowrap">
                                             <div class="flex items-center">
-                                                <img :src="book.cover" alt="封面" class="w-10 h-14 md:w-12 md:h-16 object-cover rounded mr-2 md:mr-3">
+                                                <img :src="book.cover" alt="封面"
+                                                    class="w-10 h-14 md:w-12 md:h-16 object-cover rounded mr-2 md:mr-3">
                                                 <div>
-                                                    <div class="font-medium text-gray-900 text-sm md:text-base">{{ book.title }}</div>
+                                                    <div class="font-medium text-gray-900 text-sm md:text-base">{{
+                                                        book.title }}</div>
                                                     <div class="text-xs text-gray-500">{{ book.author }}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{{ book.category }}
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                                            {{ book.category }}
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ book.views }}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{{ book.subscriptions
-                                        }}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">{{ book.updateTime }}
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                            {{ book.views }}</td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                                            {{ book.subscriptions
+                                            }}</td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
+                                            {{ book.updateTime }}
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ book.wordCount }}
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                            {{ book.wordCount }}
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm">
                                             <div class="flex flex-wrap gap-2">
-                                                <button class="text-green-600 hover:text-green-800 text-xs md:text-sm">章节管理</button>
-                                                <button class="text-red-600 hover:text-red-800 text-xs md:text-sm">删除</button>
+                                                <button
+                                                    class="text-green-600 hover:text-green-800 text-xs md:text-sm">章节管理</button>
+                                                <button
+                                                    class="text-red-600 hover:text-red-800 text-xs md:text-sm">删除</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -110,27 +136,41 @@
                         </table>
                     </div>
 
-                    <!-- 分页 -->
-                    <div class="flex justify-center mt-6">
-                        <nav class="flex items-center space-x-1">
-                            <button class="px-3 py-1 border border-gray-300 rounded text-gray-500 hover:bg-gray-50">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <button v-for="page in [1, 2, 3, 4, 5]" :key="page" :class="[
-                                'px-3 py-1 border rounded text-sm',
-                                page === 1
-                                    ? 'border-primary bg-primary text-white'
-                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                            ]">
-                                {{ page }}
-                            </button>
-                            <span class="px-3 py-1 text-gray-400">...</span>
-                            <button
-                                class="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">10</button>
-                            <button class="px-3 py-1 border border-gray-300 rounded text-gray-500 hover:bg-gray-50">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </nav>
+                    <!-- 分页导航 -->
+                    <div class="mt-4 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6"
+                        v-if="books.length > 0">
+                        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    显示 <span class="font-medium">{{ (currentBookPage - 1) * bookPageSize + 1 }}</span> 到
+                                    <span class="font-medium">{{ Math.min(currentBookPage * bookPageSize, books.length)
+                                        }}</span> 条，共
+                                    <span class="font-medium">{{ books.length }}</span> 条结果
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                    aria-label="Pagination">
+                                    <button @click="goToPrevBookPage" :disabled="currentBookPage === 1"
+                                        class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                        <span class="sr-only">上一页</span>
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <!-- 动态生成页码 -->
+                                    <button v-for="page in totalBookPages" :key="page" @click="goToBookPage(page)"
+                                        :class="currentBookPage === page
+                                            ? 'relative inline-flex items-center z-10 bg-primary border-primary px-4 py-2 text-sm font-medium text-white focus:outline-offset-0'
+                                            : 'relative inline-flex items-center border-gray-300 px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'">
+                                        {{ page }}
+                                    </button>
+                                    <button @click="goToNextBookPage" :disabled="currentBookPage === totalBookPages"
+                                        class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                        <span class="sr-only">下一页</span>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -205,7 +245,8 @@
                     <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
                         <div class="flex items-center space-x-3">
                             <h2 class="text-xl font-semibold text-gray-800">章节列表</h2>
-                            <select v-model="selectedBook" class="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            <select v-model="selectedBook"
+                                class="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                                 @change="handleBookChange">
                                 <option v-for="book in books" :key="book.id" :value="book">{{ book.title }}</option>
                             </select>
@@ -220,24 +261,32 @@
                         <table class="min-w-full">
                             <thead>
                                 <tr class="bg-gray-50">
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-4 md:py-3 md:text-sm">
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-4 md:py-3 md:text-sm">
                                         章节名</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-4 md:py-3 md:text-sm hidden sm:table-cell">
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-4 md:py-3 md:text-sm hidden sm:table-cell">
                                         更新时间</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-4 md:py-3 md:text-sm">
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-4 md:py-3 md:text-sm">
                                         是否收费</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-4 md:py-3 md:text-sm">
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-4 md:py-3 md:text-sm">
                                         操作</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <template v-if="chapters.length > 0">
-                                    <tr v-for="chapter in chapters" :key="chapter.chapterId"
+                                    <tr v-for="chapter in paginatedChapters" :key="chapter.chapterId"
                                         class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 md:px-4 md:py-3">{{
-                                            chapter.title }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 md:px-4 md:py-3 hidden sm:table-cell">{{ chapter.updateTime
-                                        }}</td>
+                                        <td
+                                            class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 md:px-4 md:py-3">
+                                            {{
+                                                chapter.title }}</td>
+                                        <td
+                                            class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 md:px-4 md:py-3 hidden sm:table-cell">
+                                            {{ chapter.updateTime
+                                            }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap md:px-4 md:py-3">
                                             <span :class="[
                                                 'px-2 py-1 text-xs rounded-full',
@@ -250,9 +299,9 @@
                                             <div class="flex flex-wrap gap-2">
                                                 <button class="text-blue-600 hover:text-blue-800">编辑</button>
                                                 <button class="text-red-600 hover:text-red-800">删除</button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </template>
                                 <tr v-else>
                                     <td colspan="4" class="px-4 py-8 text-center text-gray-500">
@@ -264,27 +313,43 @@
                         </table>
                     </div>
 
-                    <!-- 分页 -->
-                    <div class="flex justify-center mt-6">
-                        <nav class="flex items-center space-x-1">
-                            <button class="px-3 py-1 border border-gray-300 rounded text-gray-500 hover:bg-gray-50">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <button v-for="page in [1, 2, 3, 4, 5]" :key="page" :class="[
-                                'px-3 py-1 border rounded text-sm',
-                                page === 1
-                                    ? 'border-primary bg-primary text-white'
-                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                            ]">
-                                {{ page }}
-                            </button>
-                            <span class="px-3 py-1 text-gray-400">...</span>
-                            <button
-                                class="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">10</button>
-                            <button class="px-3 py-1 border border-gray-300 rounded text-gray-500 hover:bg-gray-50">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </nav>
+                    <!-- 分页导航 -->
+                    <div class="mt-4 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6"
+                        v-if="chapters.length > 0">
+                        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    显示 <span class="font-medium">{{ (currentChapterPage - 1) * chapterPageSize + 1
+                                        }}</span> 到 <span class="font-medium">{{ Math.min(currentChapterPage *
+                                        chapterPageSize, chapters.length) }}</span>
+                                    条，共
+                                    <span class="font-medium">{{ chapters.length }}</span> 条结果
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                    aria-label="Pagination">
+                                    <button @click="goToPrevChapterPage" :disabled="currentChapterPage === 1"
+                                        class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                        <span class="sr-only">上一页</span>
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <!-- 动态生成页码 -->
+                                    <button v-for="page in totalChapterPages" :key="page" @click="goToChapterPage(page)"
+                                        :class="currentChapterPage === page
+                                            ? 'relative inline-flex items-center z-10 bg-primary border-primary px-4 py-2 text-sm font-medium text-white focus:outline-offset-0'
+                                            : 'relative inline-flex items-center border-gray-300 px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'">
+                                        {{ page }}
+                                    </button>
+                                    <button @click="goToNextChapterPage"
+                                        :disabled="currentChapterPage === totalChapterPages"
+                                        class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                        <span class="sr-only">下一页</span>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -293,7 +358,8 @@
                     <div class="flex justify-between items-center mb-4 md:mb-6 pb-3 md:pb-4 border-b border-gray-200">
                         <div class="flex items-center space-x-3">
                             <h2 class="text-lg md:text-xl font-semibold text-gray-800">发布章节</h2>
-                            <select v-model="selectedBook" class="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                            <select v-model="selectedBook"
+                                class="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
                                 <option v-for="book in books" :key="book.id" :value="book">{{ book.title }}</option>
                             </select>
                         </div>
@@ -440,8 +506,10 @@
                     <div class="mb-6">
                         <h3 class="text-base md:text-lg font-semibold text-gray-800 mb-4">近期点击趋势</h3>
                         <div class="bg-gray-50 p-3 md:p-4 rounded-lg">
-                            <div class="h-48 md:h-64 flex items-end justify-center space-x-2 md:space-x-4 overflow-x-auto pb-2">
-                                <div v-for="item in clickTrend" :key="item.date" class="flex flex-col items-center flex-shrink-0">
+                            <div
+                                class="h-48 md:h-64 flex items-end justify-center space-x-2 md:space-x-4 overflow-x-auto pb-2">
+                                <div v-for="item in clickTrend" :key="item.date"
+                                    class="flex flex-col items-center flex-shrink-0">
                                     <div class="w-6 md:w-10 bg-primary rounded-t transition-all duration-300 hover:bg-primary/80"
                                         :style="{ height: normalizeClickValue(item.value) + 'px' }">
                                         <div
@@ -463,14 +531,16 @@
                             <div class="bg-gray-50 p-3 md:p-4 rounded-lg">
                                 <div class="space-y-3">
                                     <div v-for="book in books" :key="book.id" class="flex items-center">
-                                        <div class="w-24 truncate text-xs md:text-sm text-gray-700">{{ book.title }}</div>
+                                        <div class="w-24 truncate text-xs md:text-sm text-gray-700">{{ book.title }}
+                                        </div>
                                         <div class="flex-1 mx-3 md:mx-4">
                                             <div class="h-1.5 md:h-2 bg-gray-200 rounded-full overflow-hidden">
                                                 <div class="h-full bg-primary rounded-full transition-all duration-300"
                                                     :style="{ width: (book.clickCount / maxViews * 100) + '%' }"></div>
                                             </div>
                                         </div>
-                                        <div class="w-16 md:w-20 text-right text-xs md:text-sm text-gray-600">{{ (book.clickCount /
+                                        <div class="w-16 md:w-20 text-right text-xs md:text-sm text-gray-600">{{
+                                            (book.clickCount /
                                             10000).toFixed(1) }}万</div>
                                     </div>
                                 </div>
@@ -483,7 +553,8 @@
                             <div class="bg-gray-50 p-3 md:p-4 rounded-lg">
                                 <div class="space-y-3">
                                     <div v-for="book in books" :key="book.id" class="flex items-center">
-                                        <div class="w-24 truncate text-xs md:text-sm text-gray-700">{{ book.title }}</div>
+                                        <div class="w-24 truncate text-xs md:text-sm text-gray-700">{{ book.title }}
+                                        </div>
                                         <div class="flex-1 mx-3 md:mx-4">
                                             <div class="h-1.5 md:h-2 bg-gray-200 rounded-full overflow-hidden">
                                                 <div class="h-full bg-green-500 rounded-full transition-all duration-300"
@@ -491,7 +562,8 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="w-16 md:w-20 text-right text-xs md:text-sm text-gray-600">{{ book.subscriptions }}
+                                        <div class="w-16 md:w-20 text-right text-xs md:text-sm text-gray-600">{{
+                                            book.subscriptions }}
                                         </div>
                                     </div>
                                 </div>
@@ -558,6 +630,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useUserStore } from '@/stores/user.js'
 
 // 侧边栏状态管理
 const isSidebarOpen = ref(false)
@@ -581,27 +654,44 @@ import { useRoute } from 'vue-router';
 // 导入API服务
 import { bookAPI, authorAPI } from '@/api/services';
 
-// 获取路由参数
-const route = useRoute();
-const authorId = ref(1); // 默认值，将在onMounted中更新
+// 获取用户信息
+const userStore = useUserStore();
 
-// 监听路由参数变化
-watch(() => route.params.authorId, (newId) => {
-    if (newId) {
-        authorId.value = newId;
-        // 重新获取数据
-        fetchAuthorData();
-    }
-});
+// 使用当前登录用户的ID作为作者ID
+const authorId = computed(() => userStore.userId.value);
 
 // 模拟书籍数据
 const books = ref([]);
+// 小说列表分页相关
+const currentBookPage = ref(1);
+const bookPageSize = ref(10);
+const totalBookPages = computed(() => {
+    return Math.ceil(books.value.length / bookPageSize.value);
+});
+// 分页后的小说列表
+const paginatedBooks = computed(() => {
+    const start = (currentBookPage.value - 1) * bookPageSize.value;
+    const end = start + bookPageSize.value;
+    return books.value.slice(start, end);
+});
 
 // 当前选中的书籍
 const selectedBook = ref(null);
 
 // 模拟章节数据
 const chapters = ref([]);
+// 章节列表分页相关
+const currentChapterPage = ref(1);
+const chapterPageSize = ref(10);
+const totalChapterPages = computed(() => {
+    return Math.ceil(chapters.value.length / chapterPageSize.value);
+});
+// 分页后的章节列表
+const paginatedChapters = computed(() => {
+    const start = (currentChapterPage.value - 1) * chapterPageSize.value;
+    const end = start + chapterPageSize.value;
+    return chapters.value.slice(start, end);
+});
 
 // 点击趋势数据
 const clickTrend = ref([]);
@@ -628,8 +718,48 @@ const getPageTitle = () => {
     return item ? item.text : ''
 }
 
+// 小说列表分页控制方法
+const goToBookPage = (page) => {
+    if (page >= 1 && page <= totalBookPages.value) {
+        currentBookPage.value = page;
+    }
+};
+
+const goToPrevBookPage = () => {
+    if (currentBookPage.value > 1) {
+        currentBookPage.value--;
+    }
+};
+
+const goToNextBookPage = () => {
+    if (currentBookPage.value < totalBookPages.value) {
+        currentBookPage.value++;
+    }
+};
+
+// 章节列表分页控制方法
+const goToChapterPage = (page) => {
+    if (page >= 1 && page <= totalChapterPages.value) {
+        currentChapterPage.value = page;
+    }
+};
+
+const goToPrevChapterPage = () => {
+    if (currentChapterPage.value > 1) {
+        currentChapterPage.value--;
+    }
+};
+
+const goToNextChapterPage = () => {
+    if (currentChapterPage.value < totalChapterPages.value) {
+        currentChapterPage.value++;
+    }
+};
+
 // 处理书籍选择变化
 const handleBookChange = async () => {
+    // 重置章节列表页码
+    currentChapterPage.value = 1;
     try {
         // 根据选中的书籍ID获取章节列表
         const chaptersResponse = await bookAPI.getChapters(selectedBook.value.id);
@@ -640,15 +770,7 @@ const handleBookChange = async () => {
 };
 
 // 用户信息
-const user = ref({
-    username: '',
-    nickname: '',
-    email: '',
-    sex: 0,
-    desc: '',
-    location: ''
-});
-
+const user = ref({});
 // 统计数据
 const maxViews = ref(0);
 const maxWords = ref(0);
@@ -661,14 +783,14 @@ const fetchAuthorData = async () => {
         // 获取当前作者的书籍列表数据
         const booksResponse = await authorAPI.getBooks(authorId.value);
         books.value = booksResponse.data;
-        
+
         // 如果有书籍，设置默认选中的书籍并获取章节列表
         if (booksResponse.data.length > 0) {
             selectedBook.value = booksResponse.data[0];
             const chaptersResponse = await bookAPI.getChapters(booksResponse.data[0].id);
             chapters.value = chaptersResponse.data;
         }
-        
+
         // 获取作者统计数据
         const statsResponse = await authorAPI.getStats(authorId.value);
         // 使用从API获取的统计数据
@@ -676,7 +798,7 @@ const fetchAuthorData = async () => {
         maxWords.value = statsResponse.data.totalWords;
         maxSubs.value = statsResponse.data.bookCount; // 临时用书籍数量代替订阅量
         maxIncs.value = statsResponse.data.bookCount; // 临时用书籍数量代替收藏量
-        
+
         // 模拟点击趋势数据（实际项目中应该有对应的API）
         clickTrend.value = [
             { date: '1日', value: 12500 },
@@ -687,7 +809,7 @@ const fetchAuthorData = async () => {
             { date: '6日', value: 15800 },
             { date: '7日', value: 21300 },
         ];
-        
+
         // 获取作者用户信息
         const userResponse = await authorAPI.getInfo(authorId.value);
         user.value = userResponse.data;
@@ -698,12 +820,7 @@ const fetchAuthorData = async () => {
 
 // 获取数据
 onMounted(async () => {
-    // 从路由参数中获取作者ID
-    if (route.params.authorId) {
-        authorId.value = route.params.authorId;
-    }
-    
-    // 获取作者数据
+    // 直接获取作者数据（authorId已经从userStore中获取）
     await fetchAuthorData();
 });
 </script>

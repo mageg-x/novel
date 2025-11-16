@@ -27,7 +27,8 @@
                     </div>
                 </li>
             </ul>
-            <router-link v-if="showMore" :to="moreLink" class="text-center block text-primary text-sm mt-4 hover:underline">查看更多</router-link>
+            <router-link v-if="showMore" :to="moreLink"
+                class="text-center block text-primary text-sm mt-4 hover:underline">查看更多</router-link>
         </div>
     </div>
 </template>

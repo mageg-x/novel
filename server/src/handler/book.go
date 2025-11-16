@@ -13,6 +13,7 @@ import (
 
 var (
 	bs     = &service.BookService{}
+	us     = &service.UserService{}
 	logger = log.GetLogger("novel")
 )
 

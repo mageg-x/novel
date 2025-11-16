@@ -1,87 +1,77 @@
 <template>
-        <!-- 小屏幕 -->
+    <!-- 小屏幕 -->
     <div class="block md:hidden">
         <!-- 顶部导航 -->
         <div class="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg">
             <div class="flex items-center justify-between h-14 px-4">
-                <button @click="goBack" class="text-white text-xl transition-transform duration-200 hover:scale-110 cursor-pointer">
+                <button @click="goBack"
+                    class="text-white text-xl transition-transform duration-200 hover:scale-110 cursor-pointer">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span class="text-lg font-semibold">全部作品</span>
-                <button @click="goHome" class="text-white text-xl transition-transform duration-200 hover:scale-110 cursor-pointer">
+                <button @click="goHome"
+                    class="text-white text-xl transition-transform duration-200 hover:scale-110 cursor-pointer">
                     <i class="fa-solid fa-house"></i>
                 </button>
             </div>
         </div>
-        
+
         <!-- 内容区域 -->
         <div class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen pb-20">
             <!-- 筛选条件（可折叠整体面板） -->
             <div class="sticky top-14 z-40 bg-white shadow-md mb-4">
                 <!-- 筛选面板顶部 -->
-                <button 
+                <button
                     class="w-full flex items-center justify-between p-4 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors"
-                    @click="showFilters = !showFilters"
-                >
+                    @click="showFilters = !showFilters">
                     <span class="flex items-center">
                         <i class="fas fa-filter mr-2 text-emerald-500"></i>
                         筛选条件
                     </span>
-                    <i :class="['fas', showFilters ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 transition-transform duration-200']"></i>
+                    <i
+                        :class="['fas', showFilters ? 'fa-chevron-up' : 'fa-chevron-down', 'text-gray-400 transition-transform duration-200']"></i>
                 </button>
-                
+
                 <!-- 已选筛选条件 -->
                 <div v-if="!showFilters && getSelectedFilters().length > 0" class="px-4 pb-3 overflow-x-auto">
                     <div class="flex flex-wrap gap-2">
-                        <div 
-                            v-for="(filter, idx) in getSelectedFilters()" 
-                            :key="idx"
-                            class="flex items-center bg-emerald-50 text-emerald-700 text-xs px-3 py-1 rounded-full shadow-sm"
-                        >
+                        <div v-for="(filter, idx) in getSelectedFilters()" :key="idx"
+                            class="flex items-center bg-emerald-50 text-emerald-700 text-xs px-3 py-1 rounded-full shadow-sm">
                             <span class="mr-1">{{ filter.text }}</span>
-                            <i class="fas fa-times text-xs cursor-pointer hover:text-emerald-900 transition-colors" @click="clearFilter(filter)"></i>
+                            <i class="fas fa-times text-xs cursor-pointer hover:text-emerald-900 transition-colors"
+                                @click="clearFilter(filter)"></i>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- 筛选面板内容 -->
                 <div v-if="showFilters" class="p-4 space-y-4 max-h-80 overflow-y-auto">
                     <!-- 作品分类筛选 -->
                     <div>
                         <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ filters[1].label }}</h3>
                         <div class="flex overflow-x-auto pb-2 -mx-2 px-2 space-x-2">
-                            <button 
-                                v-for="(option, optIdx) in filters[1].options" 
-                                :key="optIdx"
-                                :class="[
-                                    'flex-shrink-0 px-4 py-2 rounded-full text-sm transition-all duration-200',
-                                    option.active 
-                                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                ]"
-                                @click="selectFilter(filters[1], option)"
-                            >
+                            <button v-for="(option, optIdx) in filters[1].options" :key="optIdx" :class="[
+                                'flex-shrink-0 px-4 py-2 rounded-full text-sm transition-all duration-200',
+                                option.active
+                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ]" @click="selectFilter(filters[1], option)">
                                 {{ option.text }}
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- 其他筛选条件 -->
                     <div class="space-y-3">
                         <div v-for="(filter, idx) in filters.slice(0, 1).concat(filters.slice(2))" :key="idx">
                             <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ filter.label }}</h3>
                             <div class="grid grid-cols-2 gap-2">
-                                <button 
-                                    v-for="(option, optIdx) in filter.options" 
-                                    :key="optIdx"
-                                    :class="[
-                                        'text-left px-3 py-2 rounded-md text-sm transition-all duration-200',
-                                        option.active 
-                                            ? 'bg-emerald-100 text-emerald-700 font-medium'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    ]"
-                                    @click="selectFilter(filter, option)"
-                                >
+                                <button v-for="(option, optIdx) in filter.options" :key="optIdx" :class="[
+                                    'text-left px-3 py-2 rounded-md text-sm transition-all duration-200',
+                                    option.active
+                                        ? 'bg-emerald-100 text-emerald-700 font-medium'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ]" @click="selectFilter(filter, option)">
                                     {{ option.text }}
                                 </button>
                             </div>
@@ -89,29 +79,24 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- 书籍列表 -->
             <div class="container mx-auto px-4">
-                <div 
-                    v-for="(book, index) in filteredBooks" 
-                    :key="book.id"
+                <div v-for="(book, index) in filteredBooks" :key="book.id"
                     class="bg-white rounded-2xl shadow-md p-4 mb-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer"
-                    @click="navigateToBook(book.id)"
-                >
+                    @click="navigateToBook(book.id)">
                     <!-- 排名与书籍信息 -->
                     <div class="flex items-center">
                         <!-- 排名 -->
                         <div class="mr-3">
-                            <span 
-                                :class="{
-                                    'bg-red-500': index === 0,
-                                    'bg-orange-500': index === 1,
-                                    'bg-yellow-500': index === 2,
-                                    'bg-blue-500': index > 2 && index < 10,
-                                    'bg-gray-300': index >= 10
-                                }" 
-                                class="flex items-center justify-center w-9 h-9 text-white rounded-full text-base font-bold shadow-sm"
-                            >
+                            <span :class="{
+                                'bg-red-500': index === 0,
+                                'bg-orange-500': index === 1,
+                                'bg-yellow-500': index === 2,
+                                'bg-blue-500': index > 2 && index < 10,
+                                'bg-gray-300': index >= 10
+                            }"
+                                class="flex items-center justify-center w-9 h-9 text-white rounded-full text-base font-bold shadow-sm">
                                 {{ index + 1 }}
                             </span>
                         </div>
@@ -120,7 +105,8 @@
                         <div class="flex-1">
                             <div class="flex items-center justify-between mb-1">
                                 <div class="flex items-center">
-                                    <span class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium mr-2">
+                                    <span
+                                        class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium mr-2">
                                         [{{ book.category }}]
                                     </span>
                                     <span class="text-gray-500 text-xs font-medium">{{ book.author }}</span>
@@ -129,43 +115,43 @@
                                     {{ (book.wordCount / 10000).toFixed(2) }}万
                                 </span>
                             </div>
-                            
-                            <h3 class="text-base font-semibold text-gray-800 mb-1 line-clamp-1 hover:text-emerald-600 transition-colors">
+
+                            <h3
+                                class="text-base font-semibold text-gray-800 mb-1 line-clamp-1 hover:text-emerald-600 transition-colors">
                                 {{ book.title }}
                             </h3>
-                            
+
                             <p class="text-xs text-gray-500 line-clamp-1">{{ book.latestChapterTitle }}</p>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- 分页 -->
             <div class="flex justify-center items-center space-x-1 py-8 px-4">
-                <button @click="goToPrevPage" class="px-3 py-2 text-gray-500 hover:text-emerald-500 rounded-md hover:bg-gray-100 transition-colors" :disabled="currentPage === 1">
+                <button @click="goToPrevPage"
+                    class="px-3 py-2 text-gray-500 hover:text-emerald-500 rounded-md hover:bg-gray-100 transition-colors"
+                    :disabled="currentPage === 1">
                     <i class="fas fa-chevron-left"></i>
                 </button>
-                
-                <button 
-                    v-for="page in Math.min(totalPages, 5)" 
-                    :key="page"
-                    :class="[
-                        'px-3 py-2 rounded-md text-sm transition-all duration-200',
-                        page === currentPage 
-                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
-                            : 'text-gray-600 hover:bg-gray-100'
-                    ]"
-                    @click="goToPage(page)"
-                >
+
+                <button v-for="page in Math.min(totalPages, 5)" :key="page" :class="[
+                    'px-3 py-2 rounded-md text-sm transition-all duration-200',
+                    page === currentPage
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                        : 'text-gray-600 hover:bg-gray-100'
+                ]" @click="goToPage(page)">
                     {{ page }}
                 </button>
-                
-                <button @click="goToNextPage" class="px-3 py-2 text-gray-500 hover:text-emerald-500 rounded-md hover:bg-gray-100 transition-colors" :disabled="currentPage === totalPages">
+
+                <button @click="goToNextPage"
+                    class="px-3 py-2 text-gray-500 hover:text-emerald-500 rounded-md hover:bg-gray-100 transition-colors"
+                    :disabled="currentPage === totalPages">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
         </div>
-        
+
         <!-- 底部导航 -->
         <ToolBar :activeTab="activeTab" @tab-change="handleTabChange" />
     </div>
@@ -182,9 +168,8 @@
                 <div v-for="(filter, idx) in filters" :key="idx" class="flex items-start mb-4 text-sm">
                     <div class="leading-[100%] w-20 text-gray-500 pt-1">{{ filter.label }}：</div>
                     <div class="flex-1 flex flex-wrap gap-3">
-                        <a v-for="(option, optIdx) in filter.options" :key="optIdx" href="#" 
-                            @click.prevent="selectFilter(filter, option)"
-                            :class="[
+                        <a v-for="(option, optIdx) in filter.options" :key="optIdx" href="#"
+                            @click.prevent="selectFilter(filter, option)" :class="[
                                 option.active
                                     ? 'bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1 rounded-full'
                                     : 'text-gray-600 hover:text-green-500 hover:bg-gray-100 px-3 py-1 rounded-full'
@@ -224,7 +209,9 @@
                             </td>
                             <td class="px-4 py-3 text-gray-600">{{ book.category }}</td>
                             <td class="px-4 py-3">
-                                <router-link :to="'/book/' + book.id" class="text-gray-800 hover:text-green-500 cursor-pointer">{{ book.title }}</router-link>
+                                <router-link :to="'/book/' + book.id"
+                                    class="text-gray-800 hover:text-green-500 cursor-pointer">{{ book.title
+                                    }}</router-link>
                             </td>
                             <td class="px-4 py-3 text-gray-600">{{ book.latestChapterTitle }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ book.author }}</td>
@@ -236,7 +223,8 @@
 
             <!-- Pagination -->
             <div class="flex justify-center items-center space-x-2 py-8 text-sm">
-                <button @click="goToPrevPage" class="px-3 py-1 text-gray-500 hover:text-green-500" :disabled="currentPage === 1">上一页</button>
+                <button @click="goToPrevPage" class="px-3 py-1 text-gray-500 hover:text-green-500"
+                    :disabled="currentPage === 1">上一页</button>
 
                 <button v-for="page in Math.min(totalPages, 5)" :key="page" @click="goToPage(page)" :class="[
                     page === currentPage
@@ -246,14 +234,15 @@
                     {{ page }}
                 </button>
 
-                <button @click="goToNextPage" class="px-3 py-1 text-gray-500 hover:text-green-500" :disabled="currentPage === totalPages">下一页</button>
+                <button @click="goToNextPage" class="px-3 py-1 text-gray-500 hover:text-green-500"
+                    :disabled="currentPage === totalPages">下一页</button>
             </div>
         </main>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed  } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Header from '@/components/Header.vue';
 import ToolBar from '@/components/ToolBar.vue';
@@ -432,18 +421,18 @@ const fetchBooks = async () => {
 // 过滤后的书籍列表（不含分页）
 const filteredBooksWithoutPagination = computed(() => {
     let result = [...books.value];
-    
+
     // 获取所有选中的筛选条件
     const selectedFilters = {};
     filters.value.forEach(filter => {
         selectedFilters[filter.label] = filter.options.find(option => option.active && option.text !== '不限');
     });
-    
+
     // 作品分类筛选
     if (selectedFilters['作品分类']) {
         result = result.filter(book => book.category === selectedFilters['作品分类'].text);
     }
-    
+
     // 是否完结筛选
     if (selectedFilters['是否完结']) {
         const statusText = selectedFilters['是否完结'].text;
@@ -456,7 +445,7 @@ const filteredBooksWithoutPagination = computed(() => {
             return true;
         });
     }
-    
+
     // 作品字数筛选
     if (selectedFilters['作品字数']) {
         const wordCountOption = selectedFilters['作品字数'].text;
@@ -474,7 +463,7 @@ const filteredBooksWithoutPagination = computed(() => {
             return true;
         });
     }
-    
+
     // 排序方式筛选
     if (selectedFilters['排序方式']) {
         const sortOption = selectedFilters['排序方式'].text;
@@ -490,7 +479,7 @@ const filteredBooksWithoutPagination = computed(() => {
                 break;
         }
     }
-    
+
     return result;
 });
 

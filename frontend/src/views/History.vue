@@ -5,40 +5,66 @@
         <!-- 顶部导航 -->
         <div class="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg">
             <div class="flex items-center justify-between h-14 px-4">
-                <button @click="goBack" class="text-white text-xl transition-transform duration-200 hover:scale-110 cursor-pointer">
+                <button @click="goBack"
+                    class="text-white text-xl transition-transform duration-200 hover:scale-110 cursor-pointer">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span class="text-lg font-semibold">{{ activeTab === 'shelf' ? '我的书架' : '我的阅读' }}</span>
-                <button @click="goHome" class="text-white text-xl transition-transform duration-200 hover:scale-110 cursor-pointer">
+                <button @click="goHome"
+                    class="text-white text-xl transition-transform duration-200 hover:scale-110 cursor-pointer">
                     <i class="fa-solid fa-house"></i>
                 </button>
             </div>
         </div>
-        
+
         <!-- 内容区域 -->
         <div class="pb-16 bg-gradient-to-b from-gray-50 to-white">
-            <div class="px-3 py-4">
-                <div v-for="(item, index) in displayedBooks" :key="index" class="flex items-center bg-white rounded-2xl shadow-md mb-4 overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <!-- 有数据时显示书籍列表 -->
+            <div v-if="displayedBooks.length > 0" class="px-3 py-4">
+                <div v-for="(item, index) in displayedBooks" :key="index"
+                    class="flex items-center bg-white rounded-2xl shadow-md mb-4 overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                     <!-- 封面缩略图 -->
                     <div class="w-20 h-28 flex-shrink-0 overflow-hidden">
-                        <img :src="item.book.cover" :alt="item.book.title" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+                        <img :src="item.book.cover" :alt="item.book.title"
+                            class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
                     </div>
-                    
+
                     <!-- 书籍信息 -->
                     <div class="flex-1 p-4">
-                        <div class="text-base font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight">{{ item.book.title }}</div>
-                        <div class="text-sm text-emerald-600 mb-2 line-clamp-1 font-medium">{{ item.book.latestChapterTitle }}</div>
-                        <div class="text-xs text-gray-500 mb-3">{{ activeTab === 'shelf' ? item.addTime : item.updateTime }}</div>
+                        <div class="text-base font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight">{{
+                            item.book.title }}</div>
+                        <div class="text-sm text-emerald-600 mb-2 line-clamp-1 font-medium">{{
+                            item.book.latestChapterTitle }}</div>
+                        <div class="text-xs text-gray-500 mb-3">{{ activeTab === 'shelf' ? item.addTime :
+                            item.updateTime }}</div>
                         <div class="flex items-center gap-4 pt-2">
-                            <button @click="navigateToBook(item.book.id)" class="text-sm text-emerald-600 hover:text-emerald-800 font-medium underline cursor-pointer transition-colors duration-200">
+                            <button @click="navigateToBook(item.book.id)"
+                                class="text-sm text-emerald-600 hover:text-emerald-800 font-medium underline cursor-pointer transition-colors duration-200">
                                 继续阅读
                             </button>
-                            <button v-if="activeTab === 'shelf'" @click="removeFromShelf(item.book.id, $event)" class="text-sm text-red-500 hover:text-red-700 font-medium underline cursor-pointer transition-colors duration-200">
+                            <button v-if="activeTab === 'shelf'" @click="removeFromShelf(item.book.id, $event)"
+                                class="text-sm text-red-500 hover:text-red-700 font-medium underline cursor-pointer transition-colors duration-200">
                                 移除书架
                             </button>
                         </div>
                     </div>
                 </div>
+            </div>
+            <!-- 空状态提示 -->
+            <div v-else class="flex flex-col items-center justify-center py-16 px-4">
+                <div class="text-6xl text-gray-200 mb-4">
+                    <i :class="activeTab === 'shelf' ? 'fas fa-book-open' : 'fas fa-clock'" />
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">
+                    {{ activeTab === 'shelf' ? '书架空空如也' : '暂无阅读记录' }}
+                </h3>
+                <p class="text-gray-500 mb-6 text-center">
+                    {{ activeTab === 'shelf' ? '快去添加喜欢的书籍到书架吧' : '快去阅读一本好书吧' }}
+                </p>
+                <button @click="goHome"
+                    class="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                    <i class="fas fa-home mr-2"></i>去首页看看
+                </button>
             </div>
         </div>
 
@@ -53,30 +79,23 @@
         </div>
         <!-- 标签页 -->
         <div class="flex items-center gap-2 mt-6 mb-4 p-1 bg-gray-50 rounded-lg shadow-sm">
-            <button 
-                :class="{
-                    'bg-white text-emerald-600 font-semibold': activeTab === 'shelf',
-                    'text-gray-600 hover:text-gray-800': activeTab !== 'shelf'
-                }" 
-                @click="activeTab = 'shelf'"
-                class="px-5 py-2 rounded-md transition-all duration-200 hover:shadow-sm"
-            >
+            <button :class="{
+                'bg-white text-emerald-600 font-semibold': activeTab === 'shelf',
+                'text-gray-600 hover:text-gray-800': activeTab !== 'shelf'
+            }" @click="activeTab = 'shelf'" class="px-5 py-2 rounded-md transition-all duration-200 hover:shadow-sm">
                 <i class="fas fa-book mr-2"></i> 我的书架
             </button>
-            <button 
-                :class="{
-                    'bg-white text-emerald-600 font-semibold': activeTab === 'recent',
-                    'text-gray-600 hover:text-gray-800': activeTab !== 'recent'
-                }" 
-                @click="activeTab = 'recent'"
-                class="px-5 py-2 rounded-md transition-all duration-200 hover:shadow-sm"
-            >
+            <button :class="{
+                'bg-white text-emerald-600 font-semibold': activeTab === 'recent',
+                'text-gray-600 hover:text-gray-800': activeTab !== 'recent'
+            }" @click="activeTab = 'recent'" class="px-5 py-2 rounded-md transition-all duration-200 hover:shadow-sm">
                 <i class="fas fa-clock mr-2"></i> 最近阅读
             </button>
         </div>
 
         <!-- 书籍列表 -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        <div v-if="displayedBooks.length > 0"
+            class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
             <table class="min-w-full divide-y divide-gray-100">
                 <thead class="bg-gradient-to-r from-emerald-50 to-teal-50">
                     <tr>
@@ -101,29 +120,55 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
-                    <tr v-for="(item, index) in displayedBooks" :key="index" class="hover:bg-gray-50 transition-all duration-150 hover:shadow-sm">
+                    <tr v-for="(item, index) in displayedBooks" :key="index"
+                        class="hover:bg-gray-50 transition-all duration-150 hover:shadow-sm">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <img :src="item.book.cover" :alt="item.book.title" class="w-14 h-18 object-cover rounded-md shadow-sm" />
+                            <img :src="item.book.cover" :alt="item.book.title"
+                                class="w-14 h-18 object-cover rounded-md shadow-sm" />
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">{{ item.book.category }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hover:text-emerald-700 transition-colors cursor-pointer" @click="navigateToBook(item.book.id)">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">{{ item.book.category
+                        }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hover:text-emerald-700 transition-colors cursor-pointer"
+                            @click="navigateToBook(item.book.id)">
                             {{ item.book.title }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 hover:text-emerald-800 transition-colors">
+                        <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 hover:text-emerald-800 transition-colors">
                             {{ item.book.latestChapterTitle }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ activeTab === 'shelf' ? item.addTime : item.updateTime }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ activeTab === 'shelf' ?
+                            item.addTime : item.updateTime }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <button @click="navigateToBook(item.book.id)" class="text-emerald-600 hover:text-emerald-800 font-medium underline cursor-pointer mr-3 transition-colors duration-200">
+                            <button @click="navigateToBook(item.book.id)"
+                                class="text-emerald-600 hover:text-emerald-800 font-medium underline cursor-pointer mr-3 transition-colors duration-200">
                                 继续阅读
                             </button>
-                            <button v-if="activeTab === 'shelf'" @click="removeFromShelf(item.book.id, $event)" class="text-red-500 hover:text-red-700 font-medium underline cursor-pointer transition-colors duration-200">
+                            <button v-if="activeTab === 'shelf'" @click="removeFromShelf(item.book.id, $event)"
+                                class="text-red-500 hover:text-red-700 font-medium underline cursor-pointer transition-colors duration-200">
                                 移除书架
                             </button>
                         </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+        <!-- 大屏空状态提示 -->
+        <div v-else class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 p-12">
+            <div class="flex flex-col items-center justify-center">
+                <div class="text-8xl text-gray-200 mb-6">
+                    <i :class="activeTab === 'shelf' ? 'fas fa-book-open' : 'fas fa-clock'" />
+                </div>
+                <h3 class="text-2xl font-semibold text-gray-800 mb-3">
+                    {{ activeTab === 'shelf' ? '书架空空如也' : '暂无阅读记录' }}
+                </h3>
+                <p class="text-gray-500 mb-8 text-center max-w-md">
+                    {{ activeTab === 'shelf' ? '快去添加喜欢的书籍到书架吧' : '快去阅读一本好书吧' }}
+                </p>
+                <button @click="goHome"
+                    class="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-lg">
+                    <i class="fas fa-home mr-2"></i>去首页看看
+                </button>
+            </div>
         </div>
 
         <!-- 分页（简化版） -->
@@ -134,6 +179,10 @@
             <button class="text-gray-500 hover:text-gray-700 px-3 py-1 rounded">下一页</button>
         </div>
     </div>
+
+    <!-- 通知组件 -->
+    <Notice :visible="notice.visible" :type="notice.type" :title="notice.title" :message="notice.message"
+        @close="closeNotice" />
 </template>
 
 <script setup>
@@ -141,10 +190,14 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Header from '@/components/Header.vue';
 import ToolBar from '@/components/ToolBar.vue';
+import Notice from '@/components/Notice.vue';
 import { shelfAPI, historyAPI } from '@/api/services';
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const router = useRouter()
+// 获取用户状态
+const userStore = useUserStore()
 
 // 回退和首页跳转方法
 const goBack = () => {
@@ -154,6 +207,30 @@ const goBack = () => {
 const goHome = () => {
     router.push('/')
 }
+
+// Notice 状态
+const notice = ref({
+    visible: false,
+    type: 'info',
+    title: '提示',
+    message: ''
+})
+
+// 显示通知
+const showNotice = (type, title, message) => {
+    notice.value = {
+        visible: true,
+        type,
+        title,
+        message
+    }
+}
+
+// 关闭通知
+const closeNotice = () => {
+    notice.value.visible = false
+}
+
 // 从URL参数获取tab值，默认使用'shelf'
 const activeTab = ref(route.query.tab === 'recent' || route.query.tab === 'shelf' ? route.query.tab : 'shelf')
 
@@ -195,25 +272,41 @@ const navigateToBook = (bookId) => {
 // 移除书架
 const removeFromShelf = async (bookId, event) => {
     event.stopPropagation();
+
+    // 检查用户是否登录
+    if (!userStore.isLoggedIn.value) {
+        showNotice('info', '提示', '请先登录');
+
+        // 延迟跳转，让用户看到提示
+        setTimeout(() => {
+            router.push('/login');
+        }, 1000);
+        return;
+    }
+
     try {
-        // 临时使用默认userId=1
-        await shelfAPI.removeFromShelf(1, bookId);
+        // 使用真实的用户ID
+        await shelfAPI.removeFromShelf(userStore.userId.value, bookId);
         shelfBooks.value = shelfBooks.value.filter(item => item.bookId !== bookId);
+        showNotice('success', '成功', '已从书架移除');
     } catch (error) {
         console.error('移除书架失败:', error);
+        showNotice('error', '失败', '移除书架失败，请稍后重试');
     }
 };
 
 // 获取数据
 onMounted(async () => {
     try {
-        // 临时使用默认userId=1
+        // 从用户存储获取真实的用户ID
+        const userId = userStore.userId.value;
+
         // 获取最近阅读数据
-        const recentResponse = await historyAPI.getHistory(1);
+        const recentResponse = await historyAPI.getHistory(userId);
         recentBooks.value = recentResponse.data;
-        
+
         // 获取书架数据
-        const shelfResponse = await shelfAPI.getShelf(1);
+        const shelfResponse = await shelfAPI.getShelf(userId);
         shelfBooks.value = shelfResponse.data;
     } catch (error) {
         console.error('获取数据失败:', error);

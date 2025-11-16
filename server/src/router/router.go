@@ -52,23 +52,31 @@ func SetupRouter() *gin.Engine {
 		// 用户相关路由
 		api.POST("/users/login", handler.Login)
 		api.POST("/users/register", handler.Register)
-		api.GET("/users/:user_id", handler.GetUserByID)
-		api.PUT("/users/:user_id", handler.UpdateUser)
+		api.GET("/users/:user_id", handler.AuthMiddleware(), handler.GetUserByID)
+		api.PUT("/users/:user_id", handler.AuthMiddleware(), handler.UpdateUser)
 		api.GET("/users/info/:name", handler.GetUserByName)
 
-		// 书架相关路由
-		api.GET("/users/:user_id/shelf", handler.GetUserShelf)
-		api.POST("/users/:user_id/shelf", handler.AddToShelf)
-		api.DELETE("/users/:user_id/shelf/:book_id", handler.RemoveFromShelf)
+		// 书架相关路由（需要登录）
+		api.GET("/users/:user_id/shelf", handler.AuthMiddleware(), handler.GetUserShelf)
+		api.POST("/users/:user_id/shelf", handler.AuthMiddleware(), handler.AddToShelf)
+		api.DELETE("/users/:user_id/shelf/:book_id", handler.AuthMiddleware(), handler.RemoveFromShelf)
 
-		// 阅读历史相关路由
-		api.GET("/users/:user_id/history", handler.GetUserHistory)
-		api.POST("/users/:user_id/books/:book_id/progress", handler.UpdateReadingProgress)
+		// 阅读历史相关路由（需要登录）
+		api.GET("/users/:user_id/history", handler.AuthMiddleware(), handler.GetUserHistory)
+		api.POST("/users/:user_id/books/:book_id/progress", handler.AuthMiddleware(), handler.UpdateReadingProgress)
 
 		// 作者相关路由
 		api.GET("/author/info/:id", handler.GetAuthorInfo)
 		api.GET("/author/books/:id", handler.GetAuthorBooks)
 		api.GET("/author/stats/:id", handler.GetAuthorStats)
+
+		// 作者操作相关路由（需要登录且为作者身份）
+		api.POST("/author/books", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.AddBook)
+		api.PUT("/author/books/:book_id", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.UpdateBook)
+		api.DELETE("/author/books/:book_id", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.DeleteBook)
+		api.POST("/author/books/:book_id/chapters", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.AddChapter)
+		api.PUT("/author/books/:book_id/chapters/:chapter_id", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.UpdateChapter)
+		api.DELETE("/author/books/:book_id/chapters/:chapter_id", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.DeleteChapter)
 	}
 
 	// 健康检查路由

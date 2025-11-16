@@ -1,6 +1,7 @@
 <template>
     <!-- 小屏幕 -->
-    <div :class="['block md:hidden min-h-screen', currentTheme === 'night' ? 'night' : '', currentTheme === 'eye-protect' ? 'eye-protect' : '']">
+    <div
+        :class="['block md:hidden min-h-screen', currentTheme === 'night' ? 'night' : '', currentTheme === 'eye-protect' ? 'eye-protect' : '']">
         <!-- 顶部导航栏 -->
         <header class="sticky top-0 z-50 bg-[#469b75] text-white shadow-md">
             <div class="flex items-center justify-between px-4 py-3">
@@ -13,7 +14,7 @@
                 </button>
             </div>
         </header>
-        
+
         <!-- 阅读控制栏 -->
         <div :class="[
             'sticky top-[56px] z-40 flex items-center justify-between px-4 py-2 theme-border transition-transform duration-300',
@@ -21,83 +22,71 @@
             'theme-control-bg'
         ]">
             <div class="flex items-center gap-2">
-                <button 
-                    @click="toggleNightMode"
-                    :class="['px-3 py-1 rounded-full text-sm font-medium shadow-sm transition-all', 
-                            currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white' : 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500']"
-                >
+                <button @click="toggleNightMode"
+                    :class="['px-3 py-1 rounded-full text-sm font-medium shadow-sm transition-all',
+                        currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white' : 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500']">
                     关灯
                 </button>
-                <button 
-                    @click="toggleEyeProtect"
-                    :class="['px-3 py-1 rounded-full text-sm font-medium shadow-sm transition-all', 
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' : 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500']"
-                >
+                <button @click="toggleEyeProtect"
+                    :class="['px-3 py-1 rounded-full text-sm font-medium shadow-sm transition-all',
+                        currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' : 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500']">
                     护眼
                 </button>
             </div>
             <div class="flex items-center gap-2">
                 <span class="text-sm theme-text">字体：</span>
-                <button 
-                    class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
-                    :class="currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' : 
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' : 
-                            'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200'"
-                >大</button>
-                <button 
-                    class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
-                    :class="currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' : 
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' : 
-                            'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]'"
-                >中</button>
-                <button 
-                    class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
-                    :class="currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' : 
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' : 
-                            'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200'"
-                >小</button>
+                <button class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
+                    :class="currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
+                        currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                            'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200'">大</button>
+                <button class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
+                    :class="currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
+                        currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
+                            'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]'">中</button>
+                <button class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
+                    :class="currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
+                        currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                            'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200'">小</button>
             </div>
-            <button 
-                class="w-10 h-10 flex items-center justify-center rounded-full shadow-sm transition-all"
-                :class="currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white' : 
-                        currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-400 to-green-500 text-white' : 
-                        'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500'"
-            >
+            <button class="w-10 h-10 flex items-center justify-center rounded-full shadow-sm transition-all"
+                :class="currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white' :
+                    currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-400 to-green-500 text-white' :
+                        'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500'">
                 <i class="fas fa-volume-up text-lg"></i>
             </button>
         </div>
-        
+
         <!-- 直达底部按钮 -->
         <div class="fixed right-4 bottom-20 z-30">
-            <button @click="scrollToBottom" 
+            <button @click="scrollToBottom"
                 class="w-12 h-12 bg-[#469b75] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#3d8766] transition-colors"
                 aria-label="直达底部">
                 <i class="fas fa-arrow-down text-lg"></i>
             </button>
         </div>
-        
+
         <!-- 章节列表 -->
         <div class="p-4 ">
-            <div :class="['rounded-lg shadow-md p-4 mb-4', 
-                        currentTheme === 'night' ? 'bg-[#2d2d2d] theme-border' : 
-                        currentTheme === 'eye-protect' ? 'bg-[#b3e5cc] theme-border' : 'bg-white']">
-                <h2 :class="['text-lg font-semibold mb-4', 
-                          currentTheme === 'night' ? 'text-white' : 
-                          currentTheme === 'eye-protect' ? 'text-[#333333]' : 'text-gray-800']">
+            <div :class="['rounded-lg shadow-md p-4 mb-4',
+                currentTheme === 'night' ? 'bg-[#2d2d2d] theme-border' :
+                    currentTheme === 'eye-protect' ? 'bg-[#b3e5cc] theme-border' : 'bg-white']">
+                <h2 :class="['text-lg font-semibold mb-4',
+                    currentTheme === 'night' ? 'text-white' :
+                        currentTheme === 'eye-protect' ? 'text-[#333333]' : 'text-gray-800']">
                     正文({{ chapters.length }})
                 </h2>
                 <div class="space-y-2">
-                    <a v-for="(chapter, index) in chapters" :key="index" @click="goToChapter(index)"
-                        :class="['flex items-center justify-between cursor-pointer px-3 py-3 rounded transition-colors border', 
-                                  currentTheme === 'night' ? 
-                                  'text-white hover:text-emerald-400 hover:bg-[#3d3d3d] border-[#404040]' : 
-                                  currentTheme === 'eye-protect' ? 
-                                  'text-[#333333] hover:text-[#3d8766] hover:bg-[#a5d6a7] border-[#81c784]' : 
-                                  'text-gray-700 hover:text-emerald-600 hover:bg-gray-50 border-gray-100']">
+                    <a v-for="(chapter, index) in chapters" :key="index" @click="goToChapter(index)" :class="['flex items-center justify-between cursor-pointer px-3 py-3 rounded transition-colors border',
+                        currentTheme === 'night' ?
+                            'text-white hover:text-emerald-400 hover:bg-[#3d3d3d] border-[#404040]' :
+                            currentTheme === 'eye-protect' ?
+                                'text-[#333333] hover:text-[#3d8766] hover:bg-[#a5d6a7] border-[#81c784]' :
+                                'text-gray-700 hover:text-emerald-600 hover:bg-gray-50 border-gray-100']">
                         <span class="flex-grow truncate pr-2">{{ chapter.title }}</span>
-                    <span :class="['text-sm min-w-12 text-right', chapter.isVip ? 'text-red-500' : 'text-emerald-600']">
-                        {{ chapter.isVip ? '[VIP]' : '[免费]' }}
-                    </span>
+                        <span
+                            :class="['text-sm min-w-12 text-right', chapter.isVip ? 'text-red-500' : 'text-emerald-600']">
+                            {{ chapter.isVip ? '[VIP]' : '[免费]' }}
+                        </span>
                     </a>
                 </div>
             </div>
@@ -142,13 +131,12 @@
             <h2 class="text-xl font-semibold text-gray-800 bg-gray-100 mb-6">正文(100)</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
-                <a v-for="(chapter, index) in chapters" :key="index" @click="goToChapter(index)"
-                    :class="['flex items-center justify-between cursor-pointer px-3 py-2 rounded transition-colors', 
-                              currentTheme === 'night' ? 
-                              'text-white hover:text-emerald-400 hover:bg-gray-800' : 
-                              currentTheme === 'eye-protect' ? 
-                              'text-[#333333] hover:text-[#3d8766] hover:bg-[#a5d6a7]' : 
-                              'text-gray-700 hover:text-emerald-600 hover:bg-gray-50']">
+                <a v-for="(chapter, index) in chapters" :key="index" @click="goToChapter(index)" :class="['flex items-center justify-between cursor-pointer px-3 py-2 rounded transition-colors',
+                    currentTheme === 'night' ?
+                        'text-white hover:text-emerald-400 hover:bg-gray-800' :
+                        currentTheme === 'eye-protect' ?
+                            'text-[#333333] hover:text-[#3d8766] hover:bg-[#a5d6a7]' :
+                            'text-gray-700 hover:text-emerald-600 hover:bg-gray-50']">
                     <span class="flex-grow truncate pr-2">{{ chapter.title }}</span>
                     <span :class="['text-sm min-w-16 text-right', chapter.isVip ? 'text-red-500' : 'text-emerald-600']">
                         {{ chapter.isVip ? '[VIP]' : '[免费]' }}
@@ -218,7 +206,7 @@ const goToChapter = (index) => {
 // 滚动监听处理函数
 const handleScroll = () => {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
+
     // 只有当滚动超过阈值时才触发显示/隐藏逻辑
     if (Math.abs(scrollTop - lastScrollTop.value) > scrollThreshold) {
         // 向上滚动时显示控制栏，向下滚动时隐藏
@@ -238,7 +226,7 @@ onMounted(async () => {
         // 从API获取书籍详情
         const bookResponse = await bookAPI.getById(bookId);
         bookData.value = bookResponse.data;
-        
+
         // 设置小屏幕导航栏标题
         chapterTitle.value = bookData.value.title;
 
@@ -267,7 +255,7 @@ const fetchBookData = async () => {
         // 从API获取书籍详情
         const bookResponse = await bookAPI.getById(bookId);
         bookData.value = bookResponse.data;
-        
+
         // 设置小屏幕导航栏标题
         chapterTitle.value = bookData.value.title;
 

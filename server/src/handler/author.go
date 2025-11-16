@@ -22,7 +22,7 @@ func GetAuthorInfo(c *gin.Context) {
 		return
 	}
 	// 获取作者信息
-	user, err := bs.GetUserByID(uint(id))
+	user, err := us.GetUserByID(uint(id))
 	if err != nil {
 		logger.Errorf("获取作者信息失败: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取作者信息失败"})
@@ -51,7 +51,7 @@ func GetAuthorBooks(c *gin.Context) {
 		return
 	}
 	// 获取作者作品列表
-	books, err := bs.GetBooksByAuthorID(uint(id))
+	books, err := us.GetBooksByAuthorID(uint(id))
 	if err != nil {
 		logger.Errorf("获取作者作品失败: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取作者作品失败"})
@@ -80,7 +80,7 @@ func GetAuthorStats(c *gin.Context) {
 		return
 	}
 	// 获取作者统计数据
-	stats, err := bs.GetAuthorStats(uint(id))
+	stats, err := us.GetAuthorStats(uint(id))
 	if err != nil {
 		logger.Errorf("获取作者统计数据失败: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取作者统计数据失败"})

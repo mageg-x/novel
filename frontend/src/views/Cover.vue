@@ -1,8 +1,8 @@
 <template>
     <div class="hidden md:block">
-        <Header  />
+        <Header />
     </div>
-    
+
     <!-- 小屏幕 -->
     <div class="block md:hidden">
         <!-- 顶部导航 -->
@@ -19,18 +19,19 @@
         </div>
 
         <!-- 书籍信息区域 -->
-        <div class="px-4 py-3 bg-white">          
+        <div class="px-4 py-3 bg-white">
             <div class="flex gap-8 mb-4">
                 <!-- 左侧封面图片 -->
                 <div class="flex-shrink-0">
                     <img :src="book.cover" :alt="book.title" class="w-28 h-40 object-cover rounded-md shadow" />
                 </div>
-                
+
                 <!-- 右侧书籍详情列表 -->
                 <div class="flex-1">
                     <div class="text-sm text-gray-600 mb-2">作者：{{ book.author }}</div>
                     <div class="text-sm text-gray-600 mb-2">类别：{{ book.category }}</div>
-                    <div class="text-sm text-gray-600 mb-2">状态：{{ book.status === 'serializing' ? '连载中' : book.status === 'completed' ? '完结' : book.status }}</div>
+                    <div class="text-sm text-gray-600 mb-2">状态：{{ book.status === 'serializing' ? '连载中' : book.status
+                        === 'completed' ? '完结' : book.status }}</div>
                     <div class="text-sm text-gray-600 mb-2">更新：25-11-13</div>
                     <div class="text-sm text-gray-600 mb-2">评分：6.5分</div>
                     <div class="text-sm text-gray-600">点击：{{ book.clickCount }}</div>
@@ -47,10 +48,12 @@
 
             <!-- 操作按钮 -->
             <div class="flex gap-3 mb-4 justify-evenly">
-                <button class="  bg-[#469b75] hover:bg-[#3d8766] text-white py-2 px-4 rounded-4xl font-medium" @click="handleRead">
+                <button class="  bg-[#469b75] hover:bg-[#3d8766] text-white py-2 px-4 rounded-4xl font-medium"
+                    @click="handleRead">
                     开始阅读
                 </button>
-                <button class=" border-2 border-[#469b75] text-[#469b75] hover:bg-[#469b75] hover:text-white py-2 px-4  rounded-4xl font-medium">
+                <button
+                    class=" border-2 border-[#469b75] text-[#469b75] hover:bg-[#469b75] hover:text-white py-2 px-4  rounded-4xl font-medium">
                     加入书架
                 </button>
             </div>
@@ -60,12 +63,16 @@
         <div class="bg-white mt-3 px-4 py-3">
             <div class="flex items-center justify-between mb-3 pb-2 border-b">
                 <h3 class="font-bold text-gray-800">最新章节</h3>
-                <div class="text-xs text-gray-500">更新：{{ book.updateTime ? new Date(book.updateTime).toLocaleDateString('zh-CN').replace(/\//g, '-') : '未知' }}</div>
+                <div class="text-xs text-gray-500">更新：{{ book.updateTime ? new
+                    Date(book.updateTime).toLocaleDateString('zh-CN').replace(/\//g, '-') : '未知' }}</div>
             </div>
 
             <div class="space-y-3">
-                <div class="border-l-2 border-[#469b75] pl-3 py-1" v-for="(chapter, index) in chapters.slice(0, 3)" :key="index">
-                    <router-link :to="`/book/${book.id}/${chapter.chapterId}`" class="text-sm text-gray-800 mb-1 font-medium cursor-pointer hover:text-[#469b75] transition-colors">{{ chapter.title }}</router-link>
+                <div class="border-l-2 border-[#469b75] pl-3 py-1" v-for="(chapter, index) in chapters.slice(0, 3)"
+                    :key="index">
+                    <router-link :to="`/book/${book.id}/${chapter.chapterId}`"
+                        class="text-sm text-gray-800 mb-1 font-medium cursor-pointer hover:text-[#469b75] transition-colors">{{
+                            chapter.title }}</router-link>
                 </div>
             </div>
 
@@ -76,7 +83,7 @@
 
         <!-- 底部导航 -->
         <ToolBar :showControls="true" />
-        
+
     </div>
     <!-- 大屏 -->
     <div class="hidden md:block container md:w-5xl  mx-auto px-4 py-8">
@@ -114,7 +121,8 @@
 
                                 <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
                                     <span>类别：<span class="text-gray-800">{{ book.category }}</span></span>
-                                    <span>状态：<span class="text-gray-800">{{ book.status === 'serializing' ? '连载中' : book.status === 'completed' ? '完结' : book.status }}</span></span>
+                                    <span>状态：<span class="text-gray-800">{{ book.status === 'serializing' ? '连载中' :
+                                        book.status === 'completed' ? '完结' : book.status }}</span></span>
                                     <span>点击量：<span class="text-gray-800">{{ book.clickCount }}</span></span>
                                     <span>总字数：<span class="text-gray-800">{{ book.wordCount }}</span></span>
                                 </div>
@@ -153,10 +161,12 @@
 
                         <div class="space-y-3" v-for="(chapter, index) in chapters.slice(-3).reverse()" :key="index">
                             <div class="flex justify-between items-start">
-                                <router-link :to="`/book/${book.id}/${chapter.chapterId}`" class="text-gray-800 hover:text-[#469b75] flex-1">
+                                <router-link :to="`/book/${book.id}/${chapter.chapterId}`"
+                                    class="text-gray-800 hover:text-[#469b75] flex-1">
                                     {{ chapter.title }}
                                 </router-link>
-                                <span class="text-gray-500 text-sm ml-4 whitespace-nowrap">更新时间：{{ chapter.updateTime ? new Date(chapter.updateTime).toLocaleString('zh-CN') : '未知' }}</span>
+                                <span class="text-gray-500 text-sm ml-4 whitespace-nowrap">更新时间：{{ chapter.updateTime ?
+                                    new Date(chapter.updateTime).toLocaleString('zh-CN') : '未知' }}</span>
                             </div>
                         </div>
                     </div>
@@ -172,7 +182,8 @@
                         </div>
 
                         <!-- Comment Items -->
-                        <div class="flex gap-4 mb-6" v-for="(comment, index) in showAllComments ? comments : comments.slice(0, 5)" :key="index">
+                        <div class="flex gap-4 mb-6"
+                            v-for="(comment, index) in showAllComments ? comments : comments.slice(0, 5)" :key="index">
                             <div class="flex-shrink-0">
                                 <img :src="comment.user.avatar" :alt="comment.user.nickname"
                                     class="w-12 h-12 rounded-full object-cover" />
@@ -184,7 +195,8 @@
                                 </div>
                                 <p class="text-gray-700 mb-2">{{ comment.content }}</p>
                                 <div class="flex items-center gap-4 text-sm text-gray-500">
-                                    <span>{{ comment.createTime ? new Date(comment.createTime).toLocaleString('zh-CN') : '未知' }}</span>
+                                    <span>{{ comment.createTime ? new Date(comment.createTime).toLocaleString('zh-CN') :
+                                        '未知' }}</span>
                                     <button class="hover:text-[#469b75]">↩️回复 ({{ comment.replyCount }})</button>
                                     <button class="hover:text-[#469b75]">👍赞 ({{ comment.likeCount }})</button>
                                     <button class="hover:text-[#469b75]">👎踩 ({{ comment.dislikeCount }})</button>
@@ -193,8 +205,8 @@
                         </div>
 
                         <div class="text-center mb-4" v-if="comments.length > 5">
-                            <a href="#" class="text-[#469b75] hover:underline text-sm" 
-                               @click.prevent="showAllComments = !showAllComments">
+                            <a href="#" class="text-[#469b75] hover:underline text-sm"
+                                @click.prevent="showAllComments = !showAllComments">
                                 {{ showAllComments ? '收起评论 ⏫' : '查看全部评论 ⏬' }}
                             </a>
                         </div>
@@ -258,6 +270,10 @@
             </div>
         </main>
     </div>
+
+    <!-- 通知组件 -->
+    <Notice :visible="notice.visible" :type="notice.type" :title="notice.title" :message="notice.message"
+        @close="closeNotice" />
 </template>
 
 <script setup>
@@ -265,10 +281,13 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Header from '@/components/Header.vue'
 import ToolBar from '@/components/ToolBar.vue'
+import Notice from '@/components/Notice.vue'
 import { bookAPI, userAPI } from '@/api/services'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 
 // 回退和首页跳转方法
 const goBack = () => {
@@ -293,6 +312,29 @@ const chapters = ref([])
 // 添加一个响应式变量来控制是否显示全部评论
 const showAllComments = ref(false)
 
+// Notice 状态
+const notice = ref({
+    visible: false,
+    type: 'info',
+    title: '提示',
+    message: ''
+})
+
+// 显示通知
+const showNotice = (type, title, message) => {
+    notice.value = {
+        visible: true,
+        type,
+        title,
+        message
+    }
+}
+
+// 关闭通知
+const closeNotice = () => {
+    notice.value.visible = false
+}
+
 // 获取书籍详情
 const fetchBookDetail = async () => {
     const bookId = route.params.id
@@ -300,34 +342,34 @@ const fetchBookDetail = async () => {
         // 获取书籍详情
         const bookResponse = await bookAPI.getById(bookId)
         const bookData = bookResponse.data
-        
+
         // 将description字符串转换为数组格式以适配模板
         if (typeof bookData.description === 'string') {
             bookData.description = bookData.description.split('\n').filter(line => line.trim())
         }
-        
+
         // 更新独立的breadcrumb变量
         breadcrumb.value.category = bookData.category || ''
-        
+
         // 设置书籍信息，不再包含breadcrumb
         book.value = bookData
-        
+
         // 获取相关书籍
         const relatedResponse = await bookAPI.getRelatedBooks(bookId)
         relatedBooks.value = relatedResponse.data
-        
+
         // 获取章节列表
         const chaptersResponse = await bookAPI.getChapters(bookId)
         chapters.value = chaptersResponse.data
-        
+
         // 获取评论
         const commentsResponse = await bookAPI.getComments(bookId)
         comments.value = commentsResponse.data
-        
+
         // 获取作者信息
         const authorResponse = await userAPI.getByName(bookData.author)
         author.value = authorResponse.data
-        
+
     } catch (error) {
         console.error('Failed to fetch book details:', error)
     }
@@ -359,13 +401,35 @@ const handleRead = () => {
 }
 
 const handleAddToShelf = () => {
+    if (!userStore.isLoggedIn.value) {
+        showNotice('info', '提示', '请先登录')
+
+        // 延迟跳转，让用户看到提示
+        // setTimeout(() => {
+        //     router.push('/login')
+        // }, 1000)
+        return
+    }
     console.log('Add book to shelf')
+    // 实际的加入书架逻辑
+    showNotice('success', '成功', '已加入书架')
 }
 
 const submitComment = () => {
+    if (!userStore.isLoggedIn.value) {
+        showNotice('info', '提示', '请先登录')
+
+        // 延迟跳转，让用户看到提示
+        // setTimeout(() => {
+        //     router.push('/login')
+        // }, 1000)
+        return
+    }
     if (!commentContent.value.trim()) return
     console.log('Submit comment:', commentContent.value)
+    // 实际的提交评论逻辑
     commentContent.value = ''
+    showNotice('success', '成功', '评论已发表')
 }
 
 const navigateToBook = (bookId) => {

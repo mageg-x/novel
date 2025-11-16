@@ -1,4 +1,5 @@
 import api from './axios';
+import { useUserStore } from '@/stores/user';
 
 // 分类API
 export const categoryAPI = {
@@ -45,8 +46,30 @@ export const rcmdAPI = {
 export const userAPI = {
   login: (data) => api.post('/users/login', data),
   register: (data) => api.post('/users/register', data),
-  getByID: (userId) => api.get(`/users/${userId}`),
-  getByName: (username) => api.get(`/users/info/${username}`),
+  getByID: async (userId) => {
+    const userStore = useUserStore();
+    const response = await api.get(`/users/${userId}`);
+    if (response.data && response.data.id === userStore.userId.value) {
+      userStore.setUser(response.data);
+    }
+    return response;
+  },
+  getByName: async (username) => {
+    const userStore = useUserStore();
+    const response = await api.get(`/users/info/${username}`);
+    if (response.data && response.data.id === userStore.userId.value) {
+      userStore.setUser(response.data);
+    }
+    return response;
+  },
+  updateUser: async (userId, data) => {
+    const userStore = useUserStore();
+    const response = await api.put(`/users/${userId}`, data);
+    if (response.data && response.data.id === userStore.userId.value) {
+      userStore.setUser(response.data);
+    }
+    return response;
+  },
 };
 
 // 作者API

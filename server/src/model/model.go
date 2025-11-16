@@ -87,7 +87,7 @@ type Rcmd struct {
 // Rank 对应表: ranks
 type Rank struct {
 	ID       uint   `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
-	RankType string `gorm:"column:rank_type;type:text;not null" json:"rankType"`
+	RankType string `gorm:"column:rank_type;type:text;not null" json:"rankType"` // clicks/new/update/comment
 	BookID   uint   `gorm:"column:book_id;type:integer;not null" json:"bookId"`
 	Order    int    `gorm:"column:order;type:integer;default:0" json:"order"`
 	Book     Book   `gorm:"foreignKey:BookID;references:ID" json:"book,omitempty"`

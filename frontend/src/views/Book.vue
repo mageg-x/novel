@@ -366,19 +366,19 @@ const fetchChapterContent = async () => {
     try {
         loading.value = true
         error.value = null
-        
+
         // 并行获取书籍信息和章节列表
         const [bookInfoResponse, chaptersResponse] = await Promise.all([
             bookAPI.getById(bookId),
             bookAPI.getChapters(bookId)
         ])
-        
+
         // 更新书籍信息
         bookData.value = bookInfoResponse.data
-        
+
         // 更新章节列表
         bookData.value.chapters = chaptersResponse.data
-        
+
         // 获取当前章节内容
         const chapterContentResponse = await bookAPI.getChapter(bookId, chapterId)
         currentChapter.value = chapterContentResponse.data
@@ -484,7 +484,7 @@ onUnmounted(() => {
 }
 
 /* 使用更具体的选择器覆盖浏览器默认样式 */
-.theme-text ruby > rt {
+.theme-text ruby>rt {
     font-size: 0.8em !important;
     line-height: 1;
     color: inherit;

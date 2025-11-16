@@ -2,12 +2,8 @@
   <footer class="bg-white ">
     <div class="container mx-auto px-4 py-6">
       <div class="footer-links flex flex-wrap gap-4 justify-center mb-4 text-sm text-gray-600">
-        <a
-          v-for="(link, index) in footerLinks"
-          :key="index"
-          :href="link.url"
-          class="hover:text-primary transition-colors"
-        >
+        <a v-for="(link, index) in footerLinks" :key="index" :href="link.url"
+          class="hover:text-primary transition-colors">
           {{ link.text }}
         </a>
       </div>

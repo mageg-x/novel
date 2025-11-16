@@ -5,8 +5,7 @@
             <input v-model="searchQuery" type="text" placeholder="书名、作者、关键字"
                 class="w-full py-2 px-4 pr-10 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                 @keyup.enter="handleSearch" />
-            <button class="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary"
-                @click="handleSearch">
+            <button class="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary" @click="handleSearch">
                 <i class="fa-solid fa-magnifying-glass"></i>
             </button>
         </div>
@@ -33,18 +32,39 @@
                 <router-link to="/history" class="md:hidden text-gray-600 hover:text-primary transition-colors">
                     <i class="fa-solid fa-swatchbook text-primary"></i>
                 </router-link>
-                <!-- 小屏幕显示人像图标 -->
-                <a href="#" class="md:hidden text-gray-600 hover:text-primary transition-colors">
-                    <i class="fa-solid fa-user"></i>
-                </a>
+                <!-- 小屏幕显示用户图标或登录注册 -->
+                <template v-if="isLoggedIn">
+                    <router-link to="/user" class="md:hidden text-gray-600 hover:text-primary transition-colors">
+                        <i class="fa-solid fa-user"></i>
+                    </router-link>
+                </template>
+                <template v-else>
+                    <a href="#" class="md:hidden text-gray-600 hover:text-primary transition-colors"
+                        @click.prevent="goToLogin">
+                        <i class="fa-solid fa-user"></i>
+                    </a>
+                </template>
                 <!-- 大屏幕显示完整用户操作区 -->
                 <router-link to="/history"
                     class="hidden md:inline-flex items-center text-gray-600 hover:text-primary transition-colors">
                     <i class="fa-solid fa-swatchbook text-primary mr-1"></i> 我的书架
                 </router-link>
                 <span class="hidden md:inline-block text-gray-300 mr-4">|</span>
-                <a href="#" class="hidden md:inline-flex text-gray-600 hover:text-primary transition-colors">登录</a>
-                <a href="#" class="hidden md:inline-flex text-gray-600 hover:text-dark transition-colors">注册</a>
+                <template v-if="isLoggedIn">
+                    <router-link to="/user"
+                        class="hidden md:inline-flex items-center text-gray-600 hover:text-primary transition-colors">
+                        <i class="fa-solid fa-user mr-1"></i> 个人中心
+                    </router-link>
+                    <span class="hidden md:inline-block text-gray-300"></span>
+                    <a href="#" class="hidden md:inline-flex text-gray-600 hover:text-dark transition-colors"
+                        @click.prevent="handleLogout">退出</a>
+                </template>
+                <template v-else>
+                    <a href="#" class="hidden md:inline-flex text-gray-600 hover:text-primary transition-colors"
+                        @click.prevent="goToLogin">登录</a>
+                    <a href="#" class="hidden md:inline-flex text-gray-600 hover:text-dark transition-colors"
+                        @click.prevent="goToRegister">注册</a>
+                </template>
             </div>
         </div>
 
@@ -58,16 +78,24 @@
             <div class="container mx-auto  w-5xl">
                 <ul class="flex space-x-1 md:space-x-6 py-2 overflow-x-auto">
                     <li>
-                        <router-link to="/" class="px-9 py-1 rounded hover:bg-secondary transition-colors">首页</router-link>
+                        <router-link to="/"
+                            class="px-9 py-1 rounded hover:bg-secondary transition-colors">首页</router-link>
                     </li>
                     <li>
-                        <router-link to="/class" class="px-9 py-1 rounded hover:bg-secondary transition-colors">全部作品</router-link>
+                        <router-link to="/class"
+                            class="px-9 py-1 rounded hover:bg-secondary transition-colors">全部作品</router-link>
                     </li>
                     <li>
-                        <router-link to="/rank" class="px-9 py-1 rounded hover:bg-secondary transition-colors">排行榜</router-link>
+                        <router-link to="/rank"
+                            class="px-9 py-1 rounded hover:bg-secondary transition-colors">排行榜</router-link>
                     </li>
                     <li>
-                        <router-link to="/author" class="px-9 py-1 rounded hover:bg-secondary transition-colors">作者专区</router-link>
+                        <router-link to="/author"
+                            class="px-9 py-1 rounded hover:bg-secondary transition-colors">作家专区</router-link>
+                    </li>
+                    <li v-if="isLoggedIn && isAdmin">
+                        <router-link to="/admin"
+                            class="px-9 py-1 rounded hover:bg-secondary transition-colors">后台管理</router-link>
                     </li>
                 </ul>
             </div>
@@ -77,11 +105,20 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { createReusableTemplate } from '@vueuse/core'
+import { useUserStore } from '@/stores/user'
 
+const router = useRouter()
+const userStore = useUserStore()
 const searchBar = createReusableTemplate()
 // 响应式搜索输入
 const searchQuery = ref('')
+
+// 获取登录状态
+const isLoggedIn = userStore.isLoggedIn
+// 获取管理员状态
+const isAdmin = userStore.isAdmin
 
 // 搜索处理函数（可后续对接路由或 API）
 const handleSearch = () => {
@@ -89,5 +126,20 @@ const handleSearch = () => {
         console.log('搜索关键词:', searchQuery.value)
         // 例如：router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
     }
+}
+
+// 跳转到登录页面
+const goToLogin = () => {
+    router.push('/login')
+}
+
+// 跳转到注册页面
+const goToRegister = () => {
+    router.push('/register')
+}
+
+// 退出登录
+const handleLogout = () => {
+    userStore.logout()
 }
 </script>
