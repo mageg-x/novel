@@ -67,7 +67,7 @@
                         <router-link to="/rank" class="px-9 py-1 rounded hover:bg-secondary transition-colors">排行榜</router-link>
                     </li>
                     <li>
-                        <router-link to="/admin" class="px-9 py-1 rounded hover:bg-secondary transition-colors">作者专区</router-link>
+                        <router-link to="/author" class="px-9 py-1 rounded hover:bg-secondary transition-colors">作者专区</router-link>
                     </li>
                 </ul>
             </div>

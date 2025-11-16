@@ -6,7 +6,7 @@ import Toc from '@/views/Toc.vue'
 import Class from '@/views/Class.vue'
 import Rank from '@/views/Rank.vue'
 import History from '@/views/History.vue'
-import Admin from '@/views/Admin.vue'
+import Author from '@/views/Author.vue'
 
 const routes = [
     {
@@ -45,9 +45,9 @@ const routes = [
         component: Toc
     },
     {
-        path: '/admin',
-        name: 'admin',
-        component: Admin
+        path: '/author/:authorId',
+        name: 'author',
+        component: Author
     }
 ]
 

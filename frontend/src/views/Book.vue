@@ -125,11 +125,11 @@
         :class="['hidden md:block relative min-h-screen w-5xl my-4 mx-auto', currentTheme === 'night' ? 'night' : currentTheme === 'eye-protect' ? 'eye-protect' : 'bg-[#ebe5d8]']">
         <!-- 面包屑导航 -->
         <div class="max-w-7xl mx-auto px-4 py-3 text-sm theme-text">
-            <a href="#" class="hover:text-[#469b75]">首页</a>
+            <a href="/" class="hover:text-[#469b75]">首页</a>
             <span class="mx-2">></span>
-            <a href="#" class="hover:text-[#469b75]">玄幻网络</a>
+            <a :href="`/class?category=${bookData.category}`" class="hover:text-[#469b75]">{{ bookData.category }}</a>
             <span class="mx-2">></span>
-            <a href="#" class="hover:text-[#469b75]">叛出家族后，转身投靠魔族女帝</a>
+            <a :href="`/book/${bookId}`" class="hover:text-[#469b75]">{{ bookData.title }}</a>
         </div>
 
         <!-- 阅读控制栏 -->
@@ -260,6 +260,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Header from '@/components/Header.vue'
 import ToolBar from '@/components/ToolBar.vue'
+import { bookAPI } from '@/api/services'
 
 const route = useRoute()
 const router = useRouter()
@@ -300,8 +301,6 @@ const addPinyin = (text) => {
     })
 }
 
-
-
 // 切换深色主题
 const toggleNightMode = () => {
     if (currentTheme.value === 'night') {
@@ -328,55 +327,68 @@ const toggleEyeProtect = () => {
 const bookId = route.params.bookId
 const chapterId = route.params.chapterId
 
-// 模拟书籍数据
-const bookData = {
-    title: '叛出家族后，转身投靠魔族女帝',
-    chapters: [
-        {
-            id: '1334332598936240128',
-            title: '第一卷 第1082章 忍疼割爱',
-            content: [
-                '千幻长老看好龙千跃，认为他有潜力成为下一代的宗门领袖。',
-                '在宗门大会上，千幻长老宣布了一个重要决定，让所有弟子都感到震惊。',
-                '龙千跃听到这个消息后，心中五味杂陈，不知道该如何面对这个突如其来的机遇。',
-                '他知道，这不仅是对他实力的认可，更是一份沉甸甸的责任。',
-                '在接下来的日子里，龙千跃开始了更加刻苦的修炼，为了不辜负千幻长老的期望。'
-            ]
-        },
-        {
-            id: '1334332598936240129',
-            title: '第一卷 第1081章 宗门大会',
-            content: [
-                '宗门大会即将召开，各弟子都在紧张准备着自己的参赛项目。',
-                '龙千跃也不例外，他每天都在修炼场中刻苦训练，希望能在大会上取得好成绩。',
-                '随着大会日期的临近，宗门内的气氛变得越来越紧张。',
-                '终于，大会的日子到了，所有弟子都聚集在宗门广场上，等待着大会的开始。',
-                '宗主宣布大会开始后，各弟子依次上台展示自己的实力。'
-            ]
-        },
-        {
-            id: '1334332598936240130',
-            title: '第一卷 第1080章 神秘强者',
-            content: [
-                '叶楚尘在修炼中遇到了一位神秘的强者，对方似乎对他的血脉很感兴趣。',
-                '这位神秘强者提出要收叶楚尘为徒，传授他更高级的修炼功法。',
-                '叶楚尘陷入了两难的境地，不知道是否应该接受这位神秘强者的邀请。',
-                '经过深思熟虑，叶楚尘最终决定接受邀请，跟随这位神秘强者学习。',
-                '在神秘强者的指导下，叶楚尘的修为突飞猛进，很快就超越了其他弟子。'
-            ]
-        }
-    ]
-}
+// 响应式数据
+const bookData = ref({
+    title: '',
+    chapters: []
+})
 
-// 当前章节索引
-const currentChapterIndex = ref(bookData.chapters.findIndex(chapter => chapter.id === chapterId))
+const currentChapter = ref({
+    id: '',
+    title: '',
+    content: []
+})
+
+const loading = ref(true)
+const error = ref(null)
 
 // 计算属性
-const bookTitle = computed(() => bookData.title)
-const chapterTitle = computed(() => bookData.chapters[currentChapterIndex.value].title)
-const chapterContent = computed(() => bookData.chapters[currentChapterIndex.value].content)
-const hasPreviousChapter = computed(() => currentChapterIndex.value > 0)
-const hasNextChapter = computed(() => currentChapterIndex.value < bookData.chapters.length - 1)
+const bookTitle = computed(() => bookData.value.title)
+const chapterTitle = computed(() => currentChapter.value.title)
+const chapterContent = computed(() => {
+    // 确保content是字符串类型
+    const content = currentChapter.value.content
+    if (!content || typeof content !== 'string') return []
+    // 将内容字符串按换行符分割成段落数组
+    return content.split(/\n\n+/).filter(paragraph => paragraph.trim())
+})
+const hasPreviousChapter = computed(() => {
+    const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
+    return currentIndex > 0
+})
+const hasNextChapter = computed(() => {
+    const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
+    return currentIndex < bookData.value.chapters.length - 1
+})
+
+// 获取章节内容
+const fetchChapterContent = async () => {
+    try {
+        loading.value = true
+        error.value = null
+        
+        // 并行获取书籍信息和章节列表
+        const [bookInfoResponse, chaptersResponse] = await Promise.all([
+            bookAPI.getById(bookId),
+            bookAPI.getChapters(bookId)
+        ])
+        
+        // 更新书籍信息
+        bookData.value = bookInfoResponse.data
+        
+        // 更新章节列表
+        bookData.value.chapters = chaptersResponse.data
+        
+        // 获取当前章节内容
+        const chapterContentResponse = await bookAPI.getChapter(bookId, chapterId)
+        currentChapter.value = chapterContentResponse.data
+    } catch (err) {
+        console.error('Failed to fetch chapter content:', err)
+        error.value = '获取章节内容失败，请稍后重试'
+    } finally {
+        loading.value = false
+    }
+}
 
 // 方法
 const goBack = () => {
@@ -393,19 +405,25 @@ const goToc = (chapterId) => {
 
 const previousChapter = () => {
     if (hasPreviousChapter.value) {
-        currentChapterIndex.value--
-        const previousChapter = bookData.chapters[currentChapterIndex.value]
-        router.push(`/book/${bookId}/${previousChapter.id}`)
+        const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
+        const previousChapter = bookData.value.chapters[currentIndex - 1]
+        router.push(`/book/${bookId}/${previouschapter.chapterId}`)
     }
 }
 
 const nextChapter = () => {
     if (hasNextChapter.value) {
-        currentChapterIndex.value++
-        const nextChapter = bookData.chapters[currentChapterIndex.value]
-        router.push(`/book/${bookId}/${nextChapter.id}`)
+        const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
+        const nextChapter = bookData.value.chapters[currentIndex + 1]
+        router.push(`/book/${bookId}/${nextchapter.chapterId}`)
     }
 }
+
+// 组件挂载时加载数据
+onMounted(() => {
+    fetchChapterContent()
+    window.addEventListener('scroll', handleScroll)
+})
 
 // 节流函数 - 修正实现，确保每隔指定时间执行一次
 const throttle = (func, delay) => {

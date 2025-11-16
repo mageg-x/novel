@@ -30,10 +30,12 @@
                 </button>
                 <div class="text-gray-600 text-sm md:text-base">作者后台 / {{ getPageTitle() }}</div>
                 <div class="flex items-center">
-                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary flex items-center justify-center text-white mr-2 md:mr-3">
+                    <img v-if="user.avatar" :src="user.avatar" :alt="user.nickname"
+                        class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 md:mr-3 object-cover">
+                    <div v-else class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary flex items-center justify-center text-white mr-2 md:mr-3">
                         <i class="fas fa-user text-sm md:text-base"></i>
                     </div>
-                    <span class="text-gray-700 text-sm md:text-base">作者名称</span>
+                    <span class="text-gray-700 text-sm md:text-base">{{ user.nickname || user.username }}</span>
                 </div>
             </header>
 
@@ -70,31 +72,38 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="book in books" :key="book.id" class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <img :src="book.cover" alt="封面" class="w-10 h-14 md:w-12 md:h-16 object-cover rounded mr-2 md:mr-3">
-                                            <div>
-                                                <div class="font-medium text-gray-900 text-sm md:text-base">{{ book.title }}</div>
-                                                <div class="text-xs text-gray-500">{{ book.author }}</div>
+                                <template v-if="books.length > 0">
+                                    <tr v-for="book in books" :key="book.id" class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <img :src="book.cover" alt="封面" class="w-10 h-14 md:w-12 md:h-16 object-cover rounded mr-2 md:mr-3">
+                                                <div>
+                                                    <div class="font-medium text-gray-900 text-sm md:text-base">{{ book.title }}</div>
+                                                    <div class="text-xs text-gray-500">{{ book.author }}</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{{ book.category }}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ book.views }}</td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{{ book.subscriptions
-                                    }}</td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">{{ book.updateTime }}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ book.wordCount }}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                        <div class="flex flex-wrap gap-2">
-                                            <button class="text-blue-600 hover:text-blue-800 text-xs md:text-sm">编辑</button>
-                                            <button class="text-green-600 hover:text-green-800 text-xs md:text-sm">章节管理</button>
-                                            <button class="text-red-600 hover:text-red-800 text-xs md:text-sm">删除</button>
-                                        </div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{{ book.category }}
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ book.views }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{{ book.subscriptions
+                                        }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">{{ book.updateTime }}
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ book.wordCount }}
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                            <div class="flex flex-wrap gap-2">
+                                                <button class="text-green-600 hover:text-green-800 text-xs md:text-sm">章节管理</button>
+                                                <button class="text-red-600 hover:text-red-800 text-xs md:text-sm">删除</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr v-else>
+                                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                        <i class="fas fa-book-open text-2xl mb-2"></i>
+                                        <p>暂无小说数据</p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -194,9 +203,15 @@
                 <!-- 章节列表页面 -->
                 <div v-if="activePage === 'chapter-list'" class="bg-white rounded-lg shadow-sm p-6">
                     <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
-                        <h2 class="text-xl font-semibold text-gray-800">章节列表 - 《剑来》</h2>
+                        <div class="flex items-center space-x-3">
+                            <h2 class="text-xl font-semibold text-gray-800">章节列表</h2>
+                            <select v-model="selectedBook" class="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                @change="handleBookChange">
+                                <option v-for="book in books" :key="book.id" :value="book">{{ book.title }}</option>
+                            </select>
+                        </div>
                         <button class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-                            @click="activePage = 'chapter-add'">
+                            @click="activePage = 'chapter-add'" :disabled="!selectedBook">
                             <i class="fas fa-plus mr-2"></i>新建章节
                         </button>
                     </div>
@@ -216,25 +231,33 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="chapter in chapters" :key="chapter.id"
-                                    class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 md:px-4 md:py-3">{{
-                                        chapter.title }}</td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 md:px-4 md:py-3 hidden sm:table-cell">{{ chapter.updateTime
-                                    }}</td>
-                                    <td class="px-3 py-2 whitespace-nowrap md:px-4 md:py-3">
-                                        <span :class="[
-                                            'px-2 py-1 text-xs rounded-full',
-                                            chapter.isVip ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                                        ]">
-                                            {{ chapter.isVip ? '收费' : '免费' }}
-                                        </span>
-                                    </td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm md:px-4 md:py-3">
-                                        <div class="flex flex-wrap gap-2">
-                                            <button class="text-blue-600 hover:text-blue-800">编辑</button>
-                                            <button class="text-red-600 hover:text-red-800">删除</button>
+                                <template v-if="chapters.length > 0">
+                                    <tr v-for="chapter in chapters" :key="chapter.chapterId"
+                                        class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 md:px-4 md:py-3">{{
+                                            chapter.title }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 md:px-4 md:py-3 hidden sm:table-cell">{{ chapter.updateTime
+                                        }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap md:px-4 md:py-3">
+                                            <span :class="[
+                                                'px-2 py-1 text-xs rounded-full',
+                                                chapter.isVip ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                                            ]">
+                                                {{ chapter.isVip ? '收费' : '免费' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm md:px-4 md:py-3">
+                                            <div class="flex flex-wrap gap-2">
+                                                <button class="text-blue-600 hover:text-blue-800">编辑</button>
+                                                <button class="text-red-600 hover:text-red-800">删除</button>
                                         </div>
+                                    </td>
+                                </tr>
+                                </template>
+                                <tr v-else>
+                                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                                        <i class="fas fa-file-alt text-2xl mb-2"></i>
+                                        <p>暂无章节数据</p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -268,7 +291,12 @@
                 <!-- 发布章节页面 -->
                 <div v-if="activePage === 'chapter-add'" class="bg-white rounded-lg shadow-sm p-4 md:p-6">
                     <div class="flex justify-between items-center mb-4 md:mb-6 pb-3 md:pb-4 border-b border-gray-200">
-                        <h2 class="text-lg md:text-xl font-semibold text-gray-800">发布章节 - 《剑来》</h2>
+                        <div class="flex items-center space-x-3">
+                            <h2 class="text-lg md:text-xl font-semibold text-gray-800">发布章节</h2>
+                            <select v-model="selectedBook" class="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                <option v-for="book in books" :key="book.id" :value="book">{{ book.title }}</option>
+                            </select>
+                        </div>
                         <button
                             class="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm"
                             @click="activePage = 'chapter-list'">
@@ -439,10 +467,10 @@
                                         <div class="flex-1 mx-3 md:mx-4">
                                             <div class="h-1.5 md:h-2 bg-gray-200 rounded-full overflow-hidden">
                                                 <div class="h-full bg-primary rounded-full transition-all duration-300"
-                                                    :style="{ width: (book.views / maxViews * 100) + '%' }"></div>
+                                                    :style="{ width: (book.clickCount / maxViews * 100) + '%' }"></div>
                                             </div>
                                         </div>
-                                        <div class="w-16 md:w-20 text-right text-xs md:text-sm text-gray-600">{{ (book.views /
+                                        <div class="w-16 md:w-20 text-right text-xs md:text-sm text-gray-600">{{ (book.clickCount /
                                             10000).toFixed(1) }}万</div>
                                     </div>
                                 </div>
@@ -482,25 +510,25 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                             <div>
                                 <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">用户名</label>
-                                <input type="text" value="作者名称"
+                                <input type="text" v-model="user.username"
                                     class="w-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm">
                             </div>
 
                             <div>
                                 <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">邮箱</label>
-                                <input type="email" value="author@example.com"
+                                <input type="email" v-model="user.email"
                                     class="w-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm">
                             </div>
 
                             <div>
                                 <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">手机号</label>
-                                <input type="tel" value="13800138000"
+                                <input type="tel"
                                     class="w-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm">
                             </div>
 
                             <div>
                                 <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">性别</label>
-                                <select
+                                <select v-model="user.sex"
                                     class="w-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm">
                                     <option value="0">男</option>
                                     <option value="1">女</option>
@@ -510,8 +538,8 @@
 
                             <div class="md:col-span-2">
                                 <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">个人简介</label>
-                                <textarea placeholder="请输入个人简介" rows="3 md:rows-4"
-                                    class="w-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 resize-vertical text-sm">这是一位优秀的网络小说作者</textarea>
+                                <textarea v-model="user.desc" placeholder="请输入个人简介" rows="3 md:rows-4"
+                                    class="w-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 resize-vertical text-sm"></textarea>
                             </div>
                         </div>
 
@@ -529,7 +557,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 // 侧边栏状态管理
 const isSidebarOpen = ref(false)
@@ -547,103 +575,51 @@ const menuItems = [
 // 当前活跃页面
 const activePage = ref('book-list')
 
-// 模拟书籍数据
-const books = ref([
-    {
-        id: 1,
-        title: '剑来',
-        author: '烽火戏诸侯',
-        category: '玄幻奇幻',
-        views: 1234567,
-        subscriptions: 8901,
-        updateTime: '2024-05-20 14:30',
-        wordCount: '350万字',
-        cover: 'https://picsum.photos/id/20/80/120'
-    },
-    {
-        id: 2,
-        title: '雪中悍刀行',
-        author: '烽火戏诸侯',
-        category: '武侠仙侠',
-        views: 9876543,
-        subscriptions: 12345,
-        updateTime: '2024-05-19 16:45',
-        wordCount: '400万字',
-        cover: 'https://picsum.photos/id/21/80/120'
-    },
-    {
-        id: 3,
-        title: '诡秘之主',
-        author: '爱潜水的乌贼',
-        category: '科幻灵异',
-        views: 2345678,
-        subscriptions: 9876,
-        updateTime: '2024-05-18 10:20',
-        wordCount: '300万字',
-        cover: 'https://picsum.photos/id/22/80/120'
-    },
-    {
-        id: 4,
-        title: '七零：靠弹棉花逆袭大佬爹',
-        author: '小土豆',
-        category: '都市言情',
-        views: 543210,
-        subscriptions: 4567,
-        updateTime: '2024-05-17 09:15',
-        wordCount: '150万字',
-        cover: 'https://picsum.photos/id/30/80/120'
-    },
-    {
-        id: 5,
-        title: '我娘子天下第一',
-        author: '小一郎',
-        category: '武侠仙侠',
-        views: 765432,
-        subscriptions: 3210,
-        updateTime: '2024-05-16 15:50',
-        wordCount: '200万字',
-        cover: 'https://picsum.photos/id/31/80/120'
+// 导入Vue Router
+import { useRoute } from 'vue-router';
+
+// 导入API服务
+import { bookAPI, authorAPI } from '@/api/services';
+
+// 获取路由参数
+const route = useRoute();
+const authorId = ref(1); // 默认值，将在onMounted中更新
+
+// 监听路由参数变化
+watch(() => route.params.authorId, (newId) => {
+    if (newId) {
+        authorId.value = newId;
+        // 重新获取数据
+        fetchAuthorData();
     }
-])
+});
+
+// 模拟书籍数据
+const books = ref([]);
+
+// 当前选中的书籍
+const selectedBook = ref(null);
 
 // 模拟章节数据
-const chapters = ref([
-    { id: 1, title: '第一章 小镇少年', updateTime: '2024-05-20 14:30', isVip: false },
-    { id: 2, title: '第二章 神秘老人', updateTime: '2024-05-19 16:45', isVip: false },
-    { id: 3, title: '第三章 剑心通明', updateTime: '2024-05-18 10:20', isVip: true },
-    { id: 4, title: '第四章 踏上征程', updateTime: '2024-05-17 09:15', isVip: true },
-    { id: 5, title: '第五章 初入江湖', updateTime: '2024-05-16 15:50', isVip: true }
-])
+const chapters = ref([]);
 
 // 点击趋势数据
-const clickTrend = ref([
-    { date: '1日', value: 12500 },
-    { date: '2日', value: 14200 },
-    { date: '3日', value: 13800 },
-    { date: '4日', value: 16500 },
-    { date: '5日', value: 18200 },
-    { date: '6日', value: 15800 },
-    { date: '7日', value: 21300 },
-])
+const clickTrend = ref([]);
 
-// 计算最大点击量和订阅量用于图表显示
-const maxViews = computed(() => {
-    return Math.max(...books.value.map(book => book.views))
-})
-
+// 计算最大订阅量用于图表显示
 const maxSubscriptions = computed(() => {
-    return Math.max(...books.value.map(book => book.subscriptions))
+    return books.value.length > 0 ? Math.max(...books.value.map(book => book.subscriptions)) : 0
 })
 
 // 计算最大点击趋势值用于归一化柱状图高度
 const maxClickTrend = computed(() => {
-    return Math.max(...clickTrend.value.map(item => item.value))
+    return clickTrend.value.length > 0 ? Math.max(...clickTrend.value.map(item => item.value)) : 0
 })
 
 // 归一化点击趋势值到指定高度范围
 const normalizeClickValue = (value) => {
     const maxHeight = 180 // 最大高度为180px
-    return (value / maxClickTrend.value) * maxHeight
+    return maxClickTrend.value > 0 ? (value / maxClickTrend.value) * maxHeight : 0
 }
 
 // 获取页面标题
@@ -651,4 +627,83 @@ const getPageTitle = () => {
     const item = menuItems.find(item => item.page === activePage.value)
     return item ? item.text : ''
 }
+
+// 处理书籍选择变化
+const handleBookChange = async () => {
+    try {
+        // 根据选中的书籍ID获取章节列表
+        const chaptersResponse = await bookAPI.getChapters(selectedBook.value.id);
+        chapters.value = chaptersResponse.data;
+    } catch (error) {
+        console.error('获取章节列表失败:', error);
+    }
+};
+
+// 用户信息
+const user = ref({
+    username: '',
+    nickname: '',
+    email: '',
+    sex: 0,
+    desc: '',
+    location: ''
+});
+
+// 统计数据
+const maxViews = ref(0);
+const maxWords = ref(0);
+const maxSubs = ref(0);
+const maxIncs = ref(0);
+
+// 获取作者数据
+const fetchAuthorData = async () => {
+    try {
+        // 获取当前作者的书籍列表数据
+        const booksResponse = await authorAPI.getBooks(authorId.value);
+        books.value = booksResponse.data;
+        
+        // 如果有书籍，设置默认选中的书籍并获取章节列表
+        if (booksResponse.data.length > 0) {
+            selectedBook.value = booksResponse.data[0];
+            const chaptersResponse = await bookAPI.getChapters(booksResponse.data[0].id);
+            chapters.value = chaptersResponse.data;
+        }
+        
+        // 获取作者统计数据
+        const statsResponse = await authorAPI.getStats(authorId.value);
+        // 使用从API获取的统计数据
+        maxViews.value = statsResponse.data.totalClicks;
+        maxWords.value = statsResponse.data.totalWords;
+        maxSubs.value = statsResponse.data.bookCount; // 临时用书籍数量代替订阅量
+        maxIncs.value = statsResponse.data.bookCount; // 临时用书籍数量代替收藏量
+        
+        // 模拟点击趋势数据（实际项目中应该有对应的API）
+        clickTrend.value = [
+            { date: '1日', value: 12500 },
+            { date: '2日', value: 14200 },
+            { date: '3日', value: 13800 },
+            { date: '4日', value: 16500 },
+            { date: '5日', value: 18200 },
+            { date: '6日', value: 15800 },
+            { date: '7日', value: 21300 },
+        ];
+        
+        // 获取作者用户信息
+        const userResponse = await authorAPI.getInfo(authorId.value);
+        user.value = userResponse.data;
+    } catch (error) {
+        console.error('获取数据失败:', error);
+    }
+};
+
+// 获取数据
+onMounted(async () => {
+    // 从路由参数中获取作者ID
+    if (route.params.authorId) {
+        authorId.value = route.params.authorId;
+    }
+    
+    // 获取作者数据
+    await fetchAuthorData();
+});
 </script>

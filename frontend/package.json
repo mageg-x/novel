@@ -11,6 +11,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
     "@vueuse/core": "^14.0.0",
+    "axios": "^1.13.2",
     "pinyin": "^4.0.0",
     "tailwindcss": "^4.1.17",
     "vue": "^3.5.24",
