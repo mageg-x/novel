@@ -56,7 +56,7 @@
           <!-- 用户头像和基本信息 -->
           <div class="text-center relative -mt-12 mb-8">
             <div class="inline-block relative">
-              <img v-if="userInfo.avatar" :src="userInfo.avatar" alt="用户头像"
+              <img v-if="previewAvatar || userInfo.avatar" :src="previewAvatar || userInfo.avatar" alt="用户头像"
                 class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
               <div v-else
                 class="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-5xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
@@ -64,9 +64,18 @@
               </div>
               <!-- 编辑头像提示 -->
               <button v-if="isEditing"
-                class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-2 shadow-md hover:bg-primary/90 transition-colors">
+                class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-2 shadow-md hover:bg-primary/90 transition-colors cursor-pointer"
+                @click="avatarInput.click()">
                 <i class="fas fa-camera"></i>
               </button>
+              <!-- 隐藏的文件输入框 -->
+              <input 
+                ref="avatarInput"
+                type="file" 
+                accept="image/*" 
+                class="hidden"
+                @change="handleAvatarChange"
+              >
             </div>
             <h1 class="text-3xl font-bold text-gray-800 mt-4">{{ userInfo.nickname || userInfo.username }}</h1>
             <p class="text-gray-600 mt-1 flex items-center justify-center">
@@ -240,6 +249,10 @@ const userStore = useUserStore()
 const userInfo = ref({})
 const isEditing = ref(false)
 const editForm = ref({})
+// 头像预览
+const previewAvatar = ref('')
+// 头像文件输入框引用
+const avatarInput = ref(null)
 // 加载状态
 const isLoading = ref(false)
 // 提示信息
@@ -250,6 +263,33 @@ const activeTab = ref('user')
 // 处理底部导航切换
 const handleTabChange = (tab) => {
   activeTab.value = tab
+}
+
+// 处理头像文件选择
+const handleAvatarChange = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  // 检查文件类型
+  if (!file.type.startsWith('image/')) {
+    showMessage('请选择图片文件', 'error')
+    return
+  }
+  
+  // 检查文件大小（限制为2MB）
+  if (file.size > 2 * 1024 * 1024) {
+    showMessage('图片大小不能超过2MB', 'error')
+    return
+  }
+  
+  // 生成预览URL
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    previewAvatar.value = e.target.result
+    // 更新编辑表单中的头像
+    editForm.value.avatar = previewAvatar.value
+  }
+  reader.readAsDataURL(file)
 }
 
 // 回退和首页跳转方法
@@ -298,6 +338,8 @@ const loadUserInfo = async () => {
     // 确保响应数据结构正确（由于axios响应拦截器，response已经是response.data）
     if (response && response.data) {
       userInfo.value = response.data
+      // 清除头像预览
+      previewAvatar.value = ''
 
       // 初始化编辑表单
       editForm.value = {
@@ -383,6 +425,12 @@ const handleCancelEdit = () => {
     sex: userInfo.value.sex || 0,
     location: userInfo.value.location || '',
     email: userInfo.value.email || ''
+  }
+  // 清除头像预览
+  previewAvatar.value = ''
+  // 重置文件输入框
+  if (avatarInput.value) {
+    avatarInput.value.value = ''
   }
   // 退出编辑模式
   isEditing.value = false
