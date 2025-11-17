@@ -1,6 +1,20 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type ModelEvent struct {
+	Type      string // "user_created", "user_updated", "user_deleted", etc.
+	ModelType string // "user", "book"
+	ModelID   uint
+	Payload   interface{}
+}
+
+// 全局事件通道
+var EventChannel = make(chan ModelEvent, 100)
 
 // Book 对应表: books
 type Book struct {
@@ -49,6 +63,7 @@ type User struct {
 	Location   string    `gorm:"column:location;type:text" json:"location"`
 	Status     int       `gorm:"column:status;type:integer;default:1" json:"status"`
 	Email      string    `gorm:"column:email;type:text" json:"email"`
+	Phone      string    `gorm:"column:phone;type:text" json:"phone"`
 	CreateTime time.Time `gorm:"column:create_time;autoCreateTime" json:"createTime"`
 	UpdateTime time.Time `gorm:"column:update_time;autoUpdateTime" json:"updateTime"`
 }
@@ -105,6 +120,16 @@ type Comment struct {
 	CreateTime   time.Time `gorm:"column:create_time;autoCreateTime" json:"createTime"`
 	UpdateTime   time.Time `gorm:"column:update_time;autoUpdateTime" json:"updateTime"`
 	User         User      `gorm:"foreignKey:UserID;references:ID" json:"user,omitempty"`
+	Book         Book      `gorm:"foreignKey:BookID;references:ID" json:"book,omitempty"`
+}
+
+// CommentIndex 用于评论索引的数据结构
+type CommentIndex struct {
+	ID           uint      `json:"id"`
+	BookTitle    string    `json:"bookTitle"`
+	UserNickname string    `json:"userNickname"`
+	Content      string    `json:"content"`
+	CreateTime   time.Time `json:"createTime"`
 }
 
 // InfoJSON 非数据库结构
@@ -117,4 +142,88 @@ type InfoJSON struct {
 	Status      string `json:"status"`
 	WordCount   int    `json:"wordCount"`
 	Cover       string `json:"cover"`
+}
+
+func (u *User) AfterUpdate(tx *gorm.DB) error {
+	EventChannel <- ModelEvent{
+		Type:      "updated",
+		ModelType: "user",
+		ModelID:   u.ID,
+	}
+	return nil
+}
+
+func (u *User) AfterCreate(tx *gorm.DB) error {
+	EventChannel <- ModelEvent{
+		Type:      "created",
+		ModelType: "user",
+		ModelID:   u.ID,
+	}
+	return nil
+}
+
+func (u *User) AfterDelete(tx *gorm.DB) error {
+	EventChannel <- ModelEvent{
+		Type:      "deleted",
+		ModelType: "user",
+		ModelID:   u.ID,
+	}
+	return nil
+}
+
+func (b *Book) AfterUpdate(tx *gorm.DB) error {
+	EventChannel <- ModelEvent{
+		Type:      "updated",
+		ModelType: "book",
+		ModelID:   b.ID,
+	}
+	return nil
+}
+
+func (b *Book) AfterCreate(tx *gorm.DB) error {
+	EventChannel <- ModelEvent{
+		Type:      "created",
+		ModelType: "book",
+		ModelID:   b.ID,
+	}
+	return nil
+}
+
+func (b *Book) AfterDelete(tx *gorm.DB) error {
+	EventChannel <- ModelEvent{
+		Type:      "deleted",
+		ModelType: "book",
+		ModelID:   b.ID,
+	}
+	return nil
+}
+
+// AfterUpdate Comment模型更新后的钩子函数
+func (c *Comment) AfterUpdate(tx *gorm.DB) error {
+	EventChannel <- ModelEvent{
+		Type:      "updated",
+		ModelType: "comment",
+		ModelID:   c.ID,
+	}
+	return nil
+}
+
+// AfterCreate Comment模型创建后的钩子函数
+func (c *Comment) AfterCreate(tx *gorm.DB) error {
+	EventChannel <- ModelEvent{
+		Type:      "created",
+		ModelType: "comment",
+		ModelID:   c.ID,
+	}
+	return nil
+}
+
+// AfterDelete Comment模型删除后的钩子函数
+func (c *Comment) AfterDelete(tx *gorm.DB) error {
+	EventChannel <- ModelEvent{
+		Type:      "deleted",
+		ModelType: "comment",
+		ModelID:   c.ID,
+	}
+	return nil
 }

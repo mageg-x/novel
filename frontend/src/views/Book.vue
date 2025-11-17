@@ -262,72 +262,22 @@ import Header from '@/components/Header.vue'
 import ToolBar from '@/components/ToolBar.vue'
 import { bookAPI } from '@/api/services'
 
+// 路由和导航
 const route = useRoute()
 const router = useRouter()
-
-// 主题状态
-const currentTheme = ref('') // '' 表示默认主题, 'night' 表示深色主题, 'eye-protect' 表示护眼主题
-
-// 滚动显示控制状态
-const showControls = ref(false)
-const lastScrollTop = ref(0)
-const scrollThreshold = 50 // 增加阈值，减少轻微滚动的影响
-
-// 字体大小控制
-const fontSize = ref('medium') // 'small', 'medium', 'large'
-// 字体类型控制
-const fontType = ref('default') // 'default', 'handwriting'
-// 注音控制
-const showPinyin = ref(false)
-
-// 切换字体大小
-const setFontSize = (size) => {
-    fontSize.value = size;
-};
-
-// 注音功能
-import pinyin from 'pinyin'
-
-// 为文字添加注音
-const addPinyin = (text) => {
-    if (!showPinyin.value) {
-        return text
-    }
-
-    return text.replace(/[\u4e00-\u9fa5]/g, (char) => {
-        const pinyinArray = pinyin(char, { style: pinyin.STYLE_TONE })
-        const pinyinText = pinyinArray[0][0]
-        return `<ruby>${char}<rt>${pinyinText}</rt></ruby>`
-    })
-}
-
-// 切换深色主题
-const toggleNightMode = () => {
-    if (currentTheme.value === 'night') {
-        currentTheme.value = '' // 恢复默认主题
-    } else {
-        currentTheme.value = 'night'
-        // 切换深色主题时，取消护眼主题
-        document.body.classList.remove('eye-protect')
-    }
-}
-
-// 切换护眼主题
-const toggleEyeProtect = () => {
-    if (currentTheme.value === 'eye-protect') {
-        currentTheme.value = '' // 恢复默认主题
-    } else {
-        currentTheme.value = 'eye-protect'
-        // 切换护眼主题时，取消深色主题
-        document.body.classList.remove('night')
-    }
-}
-
-// 获取路由参数
 const bookId = route.params.bookId
 const chapterId = route.params.chapterId
 
-// 响应式数据
+// 状态管理
+const currentTheme = ref('') // '' 表示默认主题, 'night' 表示深色主题, 'eye-protect' 表示护眼主题
+const showControls = ref(false)
+const lastScrollTop = ref(0)
+const scrollThreshold = 50
+const fontSize = ref('medium') // 'small', 'medium', 'large'
+const fontType = ref('default') // 'default', 'handwriting'
+const showPinyin = ref(false)
+
+// 数据
 const bookData = ref({
     title: '',
     chapters: []
@@ -346,10 +296,8 @@ const error = ref(null)
 const bookTitle = computed(() => bookData.value.title)
 const chapterTitle = computed(() => currentChapter.value.title)
 const chapterContent = computed(() => {
-    // 确保content是字符串类型
     const content = currentChapter.value.content
     if (!content || typeof content !== 'string') return []
-    // 将内容字符串按换行符分割成段落数组
     return content.split(/\n\n+/).filter(paragraph => paragraph.trim())
 })
 const hasPreviousChapter = computed(() => {
@@ -361,25 +309,87 @@ const hasNextChapter = computed(() => {
     return currentIndex < bookData.value.chapters.length - 1
 })
 
-// 获取章节内容
+// 字体和主题控制
+const setFontSize = (size) => {
+    fontSize.value = size;
+};
+
+const toggleNightMode = () => {
+    if (currentTheme.value === 'night') {
+        currentTheme.value = ''
+    } else {
+        currentTheme.value = 'night'
+        document.body.classList.remove('eye-protect')
+    }
+}
+
+const toggleEyeProtect = () => {
+    if (currentTheme.value === 'eye-protect') {
+        currentTheme.value = ''
+    } else {
+        currentTheme.value = 'eye-protect'
+        document.body.classList.remove('night')
+    }
+}
+
+// 注音功能
+import pinyin from 'pinyin'
+
+const addPinyin = (text) => {
+    if (!showPinyin.value) {
+        return text
+    }
+
+    return text.replace(/[\u4e00-\u9fa5]/g, (char) => {
+        const pinyinArray = pinyin(char, { style: pinyin.STYLE_TONE })
+        const pinyinText = pinyinArray[0][0]
+        return `<ruby>${char}<rt>${pinyinText}</rt></ruby>`
+    })
+}
+
+// 导航方法
+const goBack = () => {
+    router.back()
+}
+
+const goHome = () => {
+    router.push('/')
+}
+
+const goToc = () => {
+    router.push(`/book/${bookId}/toc`)
+}
+
+const previousChapter = () => {
+    if (hasPreviousChapter.value) {
+        const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
+        const previousChapter = bookData.value.chapters[currentIndex - 1]
+        router.push(`/book/${bookId}/${previousChapter.chapterId}`)
+    }
+}
+
+const nextChapter = () => {
+    if (hasNextChapter.value) {
+        const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
+        const nextChapter = bookData.value.chapters[currentIndex + 1]
+        router.push(`/book/${bookId}/${nextChapter.chapterId}`)
+    }
+}
+
+// 数据获取
 const fetchChapterContent = async () => {
     try {
         loading.value = true
         error.value = null
 
-        // 并行获取书籍信息和章节列表
         const [bookInfoResponse, chaptersResponse] = await Promise.all([
             bookAPI.getById(bookId),
             bookAPI.getChapters(bookId)
         ])
 
-        // 更新书籍信息
         bookData.value = bookInfoResponse.data
-
-        // 更新章节列表
         bookData.value.chapters = chaptersResponse.data
 
-        // 获取当前章节内容
         const chapterContentResponse = await bookAPI.getChapter(bookId, chapterId)
         currentChapter.value = chapterContentResponse.data
     } catch (err) {
@@ -390,42 +400,7 @@ const fetchChapterContent = async () => {
     }
 }
 
-// 方法
-const goBack = () => {
-    router.back()
-}
-
-const goHome = () => {
-    router.push('/')
-}
-
-const goToc = (chapterId) => {
-    router.push(`/book/${bookId}/toc`)
-}
-
-const previousChapter = () => {
-    if (hasPreviousChapter.value) {
-        const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
-        const previousChapter = bookData.value.chapters[currentIndex - 1]
-        router.push(`/book/${bookId}/${previouschapter.chapterId}`)
-    }
-}
-
-const nextChapter = () => {
-    if (hasNextChapter.value) {
-        const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
-        const nextChapter = bookData.value.chapters[currentIndex + 1]
-        router.push(`/book/${bookId}/${nextchapter.chapterId}`)
-    }
-}
-
-// 组件挂载时加载数据
-onMounted(() => {
-    fetchChapterContent()
-    window.addEventListener('scroll', handleScroll)
-})
-
-// 节流函数 - 修正实现，确保每隔指定时间执行一次
+// 滚动处理
 const throttle = (func, delay) => {
     let lastCall = 0;
     return function (...args) {
@@ -437,14 +412,10 @@ const throttle = (func, delay) => {
     };
 };
 
-// 滚动监听处理函数（带节流）
 const handleScroll = throttle(() => {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    // 只有当滚动超过阈值时才触发显示/隐藏逻辑
     if (Math.abs(scrollTop - lastScrollTop.value) > scrollThreshold) {
-        // 计算新的状态
         const newShowControls = scrollTop < lastScrollTop.value;
-        // 只有当状态实际改变时才更新，避免频繁切换导致的闪烁
         if (newShowControls !== showControls.value) {
             showControls.value = newShowControls;
         }
@@ -452,15 +423,15 @@ const handleScroll = throttle(() => {
     }
 }, 100);
 
-// 组件挂载时添加滚动监听
+// 生命周期
 onMounted(() => {
-    window.addEventListener('scroll', handleScroll);
-});
+    fetchChapterContent()
+    window.addEventListener('scroll', handleScroll)
+})
 
-// 组件卸载时移除滚动监听
 onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll);
-});
+    window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <style>
@@ -475,41 +446,27 @@ onUnmounted(() => {
 .theme-text ruby {
     display: ruby;
     text-align: center;
-    /* 允许文本正常换行 */
     white-space: normal;
-    /* 确保ruby元素作为整体参与排版 */
     line-height: normal;
-    /* 增加ruby元素间的间隙 */
     margin: 0 1px;
 }
 
-/* 使用更具体的选择器覆盖浏览器默认样式 */
 .theme-text ruby>rt {
     font-size: 0.8em !important;
     line-height: 1;
     color: inherit;
     opacity: 0.8;
-    /* 优化对齐和防止叠加 */
     text-align: center;
-    /* 增加拼音之间的水平间隙 */
     padding: 0 2px;
-    /* 增加拼音与汉字之间的垂直间隙 */
     margin-bottom: 4px;
-    /* 行间隙 */
     margin-top: 8px;
-    /* 使用浏览器原生的ruby-text定位 */
     display: ruby-text;
 }
 
-/* 优化带注音文本的整体段落排版 */
 .theme-text p {
-    /* 增加行高以容纳注音并保持行间距 */
     line-height: 2.2;
-    /* 确保文本对齐整齐 */
     text-align: justify;
-    /* 控制段落间距 */
     margin-bottom: 1em;
-    /* 增加段落内边距，提高整体阅读体验 */
     padding: 0.2em 0;
 }
 

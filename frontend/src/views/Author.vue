@@ -19,8 +19,10 @@
         </div>
 
         <!-- 遮罩层 -->
-        <div v-if="isSidebarOpen" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-            @click="isSidebarOpen = false"></div>
+        <teleport to="body">
+            <div v-if="isSidebarOpen" class="fixed inset-0 bg-black opacity-50 z-40 md:hidden"
+                @click="isSidebarOpen = false"></div>
+        </teleport>
 
         <!-- 主内容区 -->
         <div class="flex-1 flex flex-col overflow-hidden" :class="isSidebarOpen ? 'ml-0 md:ml-64' : 'ml-0 md:ml-64'">
@@ -629,11 +631,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useUserStore } from '@/stores/user.js'
+import { ref, computed, onMounted } from 'vue'
 
 // 侧边栏状态管理
 const isSidebarOpen = ref(false)
+
+// 当前活跃页面
+const activePage = ref('book-list')
 
 // 侧边栏菜单项
 const menuItems = [
@@ -645,23 +649,62 @@ const menuItems = [
     { page: 'account-settings', text: '账户设置', icon: 'fa-user-cog' }
 ]
 
-// 当前活跃页面
-const activePage = ref('book-list')
+// 获取页面标题
+const getPageTitle = () => {
+    const item = menuItems.find(item => item.page === activePage.value)
+    return item ? item.text : ''
+}
 
-// 导入Vue Router
-import { useRoute } from 'vue-router';
-
-// 导入API服务
-import { bookAPI, authorAPI } from '@/api/services';
-
-// 获取用户信息
-const userStore = useUserStore();
-
-// 使用当前登录用户的ID作为作者ID
-const authorId = computed(() => userStore.userId.value);
+// 用户信息
+const user = ref({
+    username: '张三',
+    email: 'zhangsan@example.com',
+    nickname: '张三',
+    avatar: '',
+    sex: '0',
+    desc: '这是一段个人简介'
+})
 
 // 模拟书籍数据
-const books = ref([]);
+const books = ref([
+    {
+        id: 1,
+        title: '星辰变',
+        author: '我吃西红柿',
+        category: '玄幻奇幻',
+        views: 1250000,
+        subscriptions: 12500,
+        updateTime: '2023-10-15',
+        wordCount: '150万',
+        cover: 'https://via.placeholder.com/80x120',
+        clickCount: 1250000
+    },
+    {
+        id: 2,
+        title: '斗破苍穹',
+        author: '天蚕土豆',
+        category: '玄幻奇幻',
+        views: 980000,
+        subscriptions: 9800,
+        updateTime: '2023-10-14',
+        wordCount: '120万',
+        cover: 'https://via.placeholder.com/80x120',
+        clickCount: 980000
+    },
+    {
+        id: 3,
+        title: '全职法师',
+        author: '乱',
+        category: '玄幻奇幻',
+        views: 870000,
+        subscriptions: 8700,
+        updateTime: '2023-10-13',
+        wordCount: '95万',
+        cover: 'https://via.placeholder.com/80x120',
+        clickCount: 870000
+    }
+]);
+
 // 小说列表分页相关
 const currentBookPage = ref(1);
 const bookPageSize = ref(10);
@@ -674,49 +717,6 @@ const paginatedBooks = computed(() => {
     const end = start + bookPageSize.value;
     return books.value.slice(start, end);
 });
-
-// 当前选中的书籍
-const selectedBook = ref(null);
-
-// 模拟章节数据
-const chapters = ref([]);
-// 章节列表分页相关
-const currentChapterPage = ref(1);
-const chapterPageSize = ref(10);
-const totalChapterPages = computed(() => {
-    return Math.ceil(chapters.value.length / chapterPageSize.value);
-});
-// 分页后的章节列表
-const paginatedChapters = computed(() => {
-    const start = (currentChapterPage.value - 1) * chapterPageSize.value;
-    const end = start + chapterPageSize.value;
-    return chapters.value.slice(start, end);
-});
-
-// 点击趋势数据
-const clickTrend = ref([]);
-
-// 计算最大订阅量用于图表显示
-const maxSubscriptions = computed(() => {
-    return books.value.length > 0 ? Math.max(...books.value.map(book => book.subscriptions)) : 0
-})
-
-// 计算最大点击趋势值用于归一化柱状图高度
-const maxClickTrend = computed(() => {
-    return clickTrend.value.length > 0 ? Math.max(...clickTrend.value.map(item => item.value)) : 0
-})
-
-// 归一化点击趋势值到指定高度范围
-const normalizeClickValue = (value) => {
-    const maxHeight = 180 // 最大高度为180px
-    return maxClickTrend.value > 0 ? (value / maxClickTrend.value) * maxHeight : 0
-}
-
-// 获取页面标题
-const getPageTitle = () => {
-    const item = menuItems.find(item => item.page === activePage.value)
-    return item ? item.text : ''
-}
 
 // 小说列表分页控制方法
 const goToBookPage = (page) => {
@@ -736,6 +736,31 @@ const goToNextBookPage = () => {
         currentBookPage.value++;
     }
 };
+
+// 当前选中的书籍
+const selectedBook = ref(books.value[0]);
+
+// 模拟章节数据
+const chapters = ref([
+    { chapterId: 1, title: '第一章 初入异世', updateTime: '2023-10-15', isVip: false },
+    { chapterId: 2, title: '第二章 修炼之路', updateTime: '2023-10-14', isVip: false },
+    { chapterId: 3, title: '第三章 意外发现', updateTime: '2023-10-13', isVip: true },
+    { chapterId: 4, title: '第四章 危机四伏', updateTime: '2023-10-12', isVip: true },
+    { chapterId: 5, title: '第五章 绝地反击', updateTime: '2023-10-11', isVip: true }
+]);
+
+// 章节列表分页相关
+const currentChapterPage = ref(1);
+const chapterPageSize = ref(10);
+const totalChapterPages = computed(() => {
+    return Math.ceil(chapters.value.length / chapterPageSize.value);
+});
+// 分页后的章节列表
+const paginatedChapters = computed(() => {
+    const start = (currentChapterPage.value - 1) * chapterPageSize.value;
+    const end = start + chapterPageSize.value;
+    return chapters.value.slice(start, end);
+});
 
 // 章节列表分页控制方法
 const goToChapterPage = (page) => {
@@ -757,70 +782,46 @@ const goToNextChapterPage = () => {
 };
 
 // 处理书籍选择变化
-const handleBookChange = async () => {
+const handleBookChange = () => {
     // 重置章节列表页码
     currentChapterPage.value = 1;
-    try {
-        // 根据选中的书籍ID获取章节列表
-        const chaptersResponse = await bookAPI.getChapters(selectedBook.value.id);
-        chapters.value = chaptersResponse.data;
-    } catch (error) {
-        console.error('获取章节列表失败:', error);
-    }
 };
 
-// 用户信息
-const user = ref({});
+// 点击趋势数据
+const clickTrend = ref([
+    { date: '1日', value: 12500 },
+    { date: '2日', value: 14200 },
+    { date: '3日', value: 13800 },
+    { date: '4日', value: 16500 },
+    { date: '5日', value: 18200 },
+    { date: '6日', value: 15800 },
+    { date: '7日', value: 21300 }
+]);
+
+// 计算最大订阅量用于图表显示
+const maxSubscriptions = computed(() => {
+    return books.value.length > 0 ? Math.max(...books.value.map(book => book.subscriptions)) : 0
+})
+
+// 计算最大点击趋势值用于归一化柱状图高度
+const maxClickTrend = computed(() => {
+    return clickTrend.value.length > 0 ? Math.max(...clickTrend.value.map(item => item.value)) : 0
+})
+
+// 归一化点击趋势值到指定高度范围
+const normalizeClickValue = (value) => {
+    const maxHeight = 180 // 最大高度为180px
+    return maxClickTrend.value > 0 ? (value / maxClickTrend.value) * maxHeight : 0
+}
+
 // 统计数据
-const maxViews = ref(0);
-const maxWords = ref(0);
-const maxSubs = ref(0);
-const maxIncs = ref(0);
-
-// 获取作者数据
-const fetchAuthorData = async () => {
-    try {
-        // 获取当前作者的书籍列表数据
-        const booksResponse = await authorAPI.getBooks(authorId.value);
-        books.value = booksResponse.data;
-
-        // 如果有书籍，设置默认选中的书籍并获取章节列表
-        if (booksResponse.data.length > 0) {
-            selectedBook.value = booksResponse.data[0];
-            const chaptersResponse = await bookAPI.getChapters(booksResponse.data[0].id);
-            chapters.value = chaptersResponse.data;
-        }
-
-        // 获取作者统计数据
-        const statsResponse = await authorAPI.getStats(authorId.value);
-        // 使用从API获取的统计数据
-        maxViews.value = statsResponse.data.totalClicks;
-        maxWords.value = statsResponse.data.totalWords;
-        maxSubs.value = statsResponse.data.bookCount; // 临时用书籍数量代替订阅量
-        maxIncs.value = statsResponse.data.bookCount; // 临时用书籍数量代替收藏量
-
-        // 模拟点击趋势数据（实际项目中应该有对应的API）
-        clickTrend.value = [
-            { date: '1日', value: 12500 },
-            { date: '2日', value: 14200 },
-            { date: '3日', value: 13800 },
-            { date: '4日', value: 16500 },
-            { date: '5日', value: 18200 },
-            { date: '6日', value: 15800 },
-            { date: '7日', value: 21300 },
-        ];
-
-        // 获取作者用户信息
-        const userResponse = await authorAPI.getInfo(authorId.value);
-        user.value = userResponse.data;
-    } catch (error) {
-        console.error('获取数据失败:', error);
-    }
-};
+const maxViews = computed(() => {
+    return books.value.length > 0 ? Math.max(...books.value.map(book => book.clickCount)) : 0
+})
 
 // 获取数据
-onMounted(async () => {
-    // 直接获取作者数据（authorId已经从userStore中获取）
-    await fetchAuthorData();
+onMounted(() => {
+    // 模拟数据加载
+    console.log('页面数据已加载');
 });
 </script>

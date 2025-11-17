@@ -14,6 +14,86 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// 搜索用户
+func SearchUsers(c *gin.Context) {
+	// 检查UserService指针是否为nil
+	if us == nil {
+		logger.Errorf("UserService未初始化")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户服务未初始化"})
+		return
+	}
+
+	keyword := c.Query("keyword")
+	pageStr := c.DefaultQuery("page", "1")
+	pageSizeStr := c.DefaultQuery("pageSize", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil || pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	offset := (page - 1) * pageSize
+	users, total, err := ss.SearchUsers(keyword, pageSize, offset)
+	if err != nil {
+		logger.Errorf("搜索用户失败: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索用户失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "success",
+		"data": gin.H{
+			"users": users,
+			"total": total,
+		},
+	})
+}
+
+// 搜索评论
+func SearchComments(c *gin.Context) {
+	// 检查SearchService指针是否为nil
+	if ss == nil {
+		logger.Errorf("SearchService未初始化")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索服务未初始化"})
+		return
+	}
+
+	keyword := c.Query("keyword")
+	pageStr := c.DefaultQuery("page", "1")
+	pageSizeStr := c.DefaultQuery("pageSize", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil || pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	offset := (page - 1) * pageSize
+	comments, total, err := ss.SearchComments(keyword, pageSize, offset)
+	if err != nil {
+		logger.Errorf("搜索评论失败: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索评论失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "success",
+		"data": gin.H{
+			"comments": comments,
+			"total":    total,
+		},
+	})
+}
+
 func Login(c *gin.Context) {
 	// 检查UserService指针是否为nil
 	if us == nil {

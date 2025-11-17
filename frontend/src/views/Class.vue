@@ -248,9 +248,9 @@ import Header from '@/components/Header.vue';
 import ToolBar from '@/components/ToolBar.vue';
 import { bookAPI } from '@/api/services';
 
+// 路由和导航
 const router = useRouter()
 
-// 回退和首页跳转方法
 const goBack = () => {
     router.back()
 }
@@ -272,10 +272,37 @@ const navigateToBook = (bookId) => {
     router.push(`/book/${bookId}`)
 }
 
-// ===== 模拟筛选条件数据（完整还原）=====
-// 控制筛选面板的显示与隐藏
+// 状态管理
 const showFilters = ref(false);
+const currentPage = ref(1);
+const pageSize = ref(20);
+const books = ref([]);
 
+// 分页相关
+const totalPages = computed(() => {
+    return Math.ceil(filteredBooksWithoutPagination.value.length / pageSize.value);
+});
+
+// 分页控制函数
+const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+    }
+};
+
+const goToPrevPage = () => {
+    if (currentPage.value > 1) {
+        currentPage.value--;
+    }
+};
+
+const goToNextPage = () => {
+    if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+    }
+};
+
+// 筛选条件
 const filters = ref([
     {
         label: '作品频道',
@@ -335,7 +362,7 @@ const filters = ref([
     }
 ])
 
-// 获取所有选中的筛选条件
+// 筛选条件操作
 const getSelectedFilters = () => {
     const selected = [];
     filters.value.forEach(filter => {
@@ -348,15 +375,11 @@ const getSelectedFilters = () => {
     return selected;
 };
 
-// 清除指定的筛选条件
 const clearFilter = (filterToClear) => {
     filters.value.forEach(filter => {
-        // 找到包含该选项的筛选条件组
         const optionIndex = filter.options.findIndex(option => option === filterToClear);
         if (optionIndex !== -1) {
-            // 将当前选项设置为非激活
             filter.options[optionIndex].active = false;
-            // 找到"不限"选项并设置为激活
             const unlimitedOption = filter.options.find(option => option.text === '不限');
             if (unlimitedOption) {
                 unlimitedOption.active = true;
@@ -365,60 +388,26 @@ const clearFilter = (filterToClear) => {
     });
 };
 
-// 选择筛选条件
 const selectFilter = (filter, option) => {
-    // 将该筛选条件组下的所有选项设置为非激活状态
     filter.options.forEach(opt => {
         opt.active = false;
     });
-    // 将选中的选项设置为激活状态
     option.active = true;
-    // 重置到第一页
     currentPage.value = 1;
 };
 
-// 分页控制函数
-const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages.value) {
-        currentPage.value = page;
-    }
-};
-
-const goToPrevPage = () => {
-    if (currentPage.value > 1) {
-        currentPage.value--;
-    }
-};
-
-const goToNextPage = () => {
-    if (currentPage.value < totalPages.value) {
-        currentPage.value++;
-    }
-};
-
-// 书籍数据
-const books = ref([]);
-
-// 分页相关
-const currentPage = ref(1);
-const pageSize = ref(20);
-const totalPages = computed(() => {
-    return Math.ceil(filteredBooksWithoutPagination.value.length / pageSize.value);
-});
-
-// 获取书籍列表
+// 数据获取
 const fetchBooks = async () => {
     try {
         const response = await bookAPI.getAll();
         books.value = response.data.books;
-        // 重置到第一页
         currentPage.value = 1;
     } catch (error) {
         console.error('获取书籍列表失败:', error);
     }
 };
 
-// 过滤后的书籍列表（不含分页）
+// 计算属性
 const filteredBooksWithoutPagination = computed(() => {
     let result = [...books.value];
 
@@ -483,14 +472,13 @@ const filteredBooksWithoutPagination = computed(() => {
     return result;
 });
 
-// 分页后的书籍列表
 const filteredBooks = computed(() => {
     const start = (currentPage.value - 1) * pageSize.value;
     const end = start + pageSize.value;
     return filteredBooksWithoutPagination.value.slice(start, end);
 });
 
-// 页面挂载时获取数据
+// 生命周期
 onMounted(() => {
     fetchBooks();
 });

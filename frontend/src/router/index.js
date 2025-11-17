@@ -8,13 +8,13 @@ import Class from "@/views/Class.vue";
 import Rank from "@/views/Rank.vue";
 import History from "@/views/History.vue";
 import Author from "@/views/Author.vue";
+import Admin from "@/views/Admin.vue";
 import Login from "@/views/Login.vue";
 import Register from "@/views/Register.vue";
 import User from "@/views/User.vue";
 
 const routes = [
   { path: "/", redirect: "/home" },
-  { path: "/admin", redirect: "/home" },
   {
     path: "/home",
     name: "home",
@@ -77,7 +77,16 @@ const routes = [
     component: Author,
     meta: {
       requiresAuth: true, // 需要登录才能访问
-      requiresAuthor: true // 需要作者身份才能访问
+      // requiresAuthor: true // 需要作者身份才能访问
+    }
+  },
+  {
+    path: "/admin",
+    name: "admin",
+    component: Admin,
+    meta: {
+      requiresAuth: true, // 需要登录才能访问
+      requiresAdmin: true // 需要管理员身份才能访问
     }
   },
 ];
@@ -105,9 +114,25 @@ router.beforeEach((to, from, next) => {
       next({ path: "/home" });
       return;
     }
+
+    // 检查是否需要管理员身份
+    if (to.meta.requiresAdmin && !userStore.isAdmin.value) {
+      // 不是管理员，跳转到首页
+      next({ path: "/home" });
+      return;
+    }
   }
 
   next();
+});
+
+// 路由切换完成后检查是否需要刷新
+router.afterEach((to, from) => {
+  // 从/admin或/author页面后退到/home时，强制刷新页面
+  if (to.path === '/home' && (from.path === '/admin' || from.path === '/author')) {
+    // 使用window.location.reload()强制刷新页面
+    window.location.reload();
+  }
 });
 
 export default router;

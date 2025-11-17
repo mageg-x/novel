@@ -35,6 +35,8 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		logger.Infof("用户ID: %d, 用户名: %s, 用户类型: %s", claims.UserID, claims.Username, claims.Type)
+
 		// 将用户信息存储在上下文中
 		c.Set("userID", claims.UserID)
 		c.Set("username", claims.Username)
@@ -58,6 +60,28 @@ func AuthorMiddleware() gin.HandlerFunc {
 		// 检查用户是否为作者
 		if userType != "author" {
 			c.JSON(http.StatusForbidden, gin.H{"error": "需要作者身份"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// AdminMiddleware 管理员身份中间件
+func AdminMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 获取用户类型
+		userType, exists := c.Get("userType")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "未提供用户类型"})
+			c.Abort()
+			return
+		}
+
+		// 检查用户是否为管理员
+		if userType != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "需要管理员身份"})
 			c.Abort()
 			return
 		}

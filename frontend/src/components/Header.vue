@@ -122,10 +122,8 @@ const isAdmin = userStore.isAdmin
 
 // 搜索处理函数（可后续对接路由或 API）
 const handleSearch = () => {
-    if (searchQuery.value.trim()) {
-        console.log('搜索关键词:', searchQuery.value)
-        // 例如：router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
-    }
+    console.log('搜索关键词:', searchQuery.value)
+    // 例如：router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
 }
 
 // 跳转到登录页面

@@ -59,6 +59,13 @@ func main() {
 	}
 	logger.Info("数据库初始化完成")
 
+	// 初始化搜索服务
+	if err := service.SService.InitSearch(); err != nil {
+		logger.Fatalf("搜索服务初始化失败: %v", err)
+		return
+	}
+	logger.Info("搜索服务初始化完成")
+
 	// 设置路由
 	r := router.SetupRouter()
 	logger.Info("路由配置完成")

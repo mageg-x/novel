@@ -14,6 +14,7 @@ import (
 var (
 	bs     = &service.BookService{}
 	us     = &service.UserService{}
+	ss     = service.SService
 	logger = log.GetLogger("novel")
 )
 
@@ -100,6 +101,46 @@ func GetBooksByCategory(c *gin.Context) {
 	if err != nil {
 		logger.Errorf("根据分类获取书籍失败: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取书籍列表失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "success",
+		"data": gin.H{
+			"books": books,
+			"total": total,
+		},
+	})
+}
+
+// 搜索书籍
+type BookSearchParams struct {
+	Keyword  string `form:"keyword"`
+	Page     int    `form:"page,default=1" binding:"min=1"`
+	PageSize int    `form:"page_size,default=10" binding:"min=1,max=100"`
+}
+
+func SearchBooks(c *gin.Context) {
+	// 检查BookService指针是否为nil
+	if bs == nil {
+		logger.Errorf("BookService未初始化")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		return
+	}
+
+	var params BookSearchParams
+	if err := c.ShouldBindQuery(&params); err != nil {
+		logger.Errorf("参数错误: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		return
+	}
+
+	offset := (params.Page - 1) * params.PageSize
+	books, total, err := ss.SearchBooks(params.Keyword, params.PageSize, offset)
+	if err != nil {
+		logger.Errorf("搜索书籍失败: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索书籍失败"})
 		return
 	}
 
@@ -573,7 +614,7 @@ func DeleteChapter(c *gin.Context) {
 }
 
 // 获取推荐书籍通用处理函数
-func GetRcmdBooks(c *gin.Context) {
+func GetRcmds(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
@@ -610,5 +651,103 @@ func GetRcmdBooks(c *gin.Context) {
 		"code":    200,
 		"message": "success",
 		"data":    rcmds,
+	})
+}
+
+// 添加推荐
+func AddRcmd(c *gin.Context) {
+	// 从路径参数获取推荐类型
+	rcmdType := c.Param("type")
+
+	var req struct {
+		BookID uint `json:"bookId" binding:"required"`
+		Order  int  `json:"order"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		return
+	}
+
+	// 检查书籍是否存在
+	if _, err := bs.GetBookByID(req.BookID); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "书籍不存在"})
+		return
+	}
+
+	// 检查是否已存在
+	var existingRcmd model.Rcmd
+	if err := service.DB.Where("rcmd_type = ? AND book_id = ?", rcmdType, req.BookID).First(&existingRcmd).Error; err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "该书籍已在推荐列表中"})
+		return
+	}
+
+	// 创建新的推荐条目
+	rcmd := model.Rcmd{
+		RcmdType: rcmdType,
+		BookID:   req.BookID,
+		Order:    req.Order,
+	}
+
+	if err := service.DB.Create(&rcmd).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "添加推荐失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "添加推荐成功",
+		"data":    rcmd,
+	})
+}
+
+// 删除推荐
+func DeleteRcmd(c *gin.Context) {
+	// 从路径参数获取推荐类型和ID
+	rcmdType := c.Param("type")
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的推荐ID"})
+		return
+	}
+
+	// 删除指定类型和ID的推荐条目
+	if err := service.DB.Where("rcmd_type = ? AND id = ?", rcmdType, id).Delete(&model.Rcmd{}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除推荐失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "删除推荐成功",
+	})
+}
+
+// 批量更新推荐顺序
+func UpdateRcmds(c *gin.Context) {
+	// 从路径参数获取推荐类型
+	rcmdType := c.Param("type")
+
+	var rcmds []model.Rcmd
+	if err := c.ShouldBindJSON(&rcmds); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		return
+	}
+
+	// 批量更新顺序
+	tx := service.DB.Begin()
+	for _, rcmd := range rcmds {
+		if err := tx.Model(&model.Rcmd{}).Where("id = ? AND rcmd_type = ?", rcmd.ID, rcmdType).Update("order", rcmd.Order).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "更新推荐顺序失败"})
+			return
+		}
+	}
+
+	tx.Commit()
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "更新推荐顺序成功",
 	})
 }

@@ -24,10 +24,14 @@ func SetupRouter() *gin.Engine {
 		api.GET("/categories/:category/books", handler.GetBooksByCategory)
 
 		// 推荐相关路由
-		api.GET("/rcmd/:type", handler.GetRcmdBooks)
+		api.GET("/rcmd/:type", handler.GetRcmds)
+		api.POST("/rcmd/:type", handler.AuthMiddleware(), handler.AdminMiddleware(), handler.AddRcmd)
+		api.DELETE("/rcmd/:type/:id", handler.AuthMiddleware(), handler.AdminMiddleware(), handler.DeleteRcmd)
+		api.PUT("/rcmd/:type", handler.AuthMiddleware(), handler.AdminMiddleware(), handler.UpdateRcmds)
 
 		// 书籍相关路由
 		api.GET("/books", handler.GetAllBooks)
+		api.GET("/books/search", handler.SearchBooks)
 		api.GET("/books/:book_id", handler.GetBookByID)
 		api.POST("/books", handler.AddBook)
 		api.PUT("/books/:book_id", handler.UpdateBook)
@@ -48,10 +52,14 @@ func SetupRouter() *gin.Engine {
 
 		// 排行榜相关路由
 		api.GET("/ranks/:type", handler.GetRanks)
+		api.POST("/ranks/:type", handler.AuthMiddleware(), handler.AdminMiddleware(), handler.AddRank)
+		api.DELETE("/ranks/:type/:id", handler.AuthMiddleware(), handler.AdminMiddleware(), handler.DeleteRank)
+		api.PUT("/ranks/:type", handler.AuthMiddleware(), handler.AdminMiddleware(), handler.UpdateRanks)
 
 		// 用户相关路由
 		api.POST("/users/login", handler.Login)
 		api.POST("/users/register", handler.Register)
+		api.GET("/users/search", handler.SearchUsers)
 		api.GET("/users/:user_id", handler.AuthMiddleware(), handler.GetUserByID)
 		api.PUT("/users/:user_id", handler.AuthMiddleware(), handler.UpdateUser)
 		api.GET("/users/info/:name", handler.GetUserByName)
@@ -77,6 +85,13 @@ func SetupRouter() *gin.Engine {
 		api.POST("/author/books/:book_id/chapters", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.AddChapter)
 		api.PUT("/author/books/:book_id/chapters/:chapter_id", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.UpdateChapter)
 		api.DELETE("/author/books/:book_id/chapters/:chapter_id", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.DeleteChapter)
+
+		// 评论管理 - 管理员权限
+		api.GET("/comments", handler.AuthMiddleware(), handler.AdminMiddleware(), handler.GetComments) // 支持搜索和分页
+		api.DELETE("/comments/:id", handler.AuthMiddleware(), handler.AdminMiddleware(), handler.DeleteComment)
+		
+		// 评论搜索接口
+		api.GET("/comments/search", handler.SearchComments)
 	}
 
 	// 健康检查路由
