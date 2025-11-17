@@ -1,0 +1,322 @@
+# API 测试文件
+# 用于 VS Code REST Client 或类似工具测试接口
+
+# 基础 URL
+@baseUrl = http://localhost:8000/api
+
+## 健康检查
+### 健康检查
+GET http://localhost:8000/health
+
+## 书籍管理
+### 获取所有书籍
+GET {{baseUrl}}/books
+
+### 根据 ID 获取书籍
+GET {{baseUrl}}/books/1
+
+### 添加书籍
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{
+  "title": "灭世",
+  "author": "测试作者",
+  "cover": "https://example.com/cover.jpg",
+  "description": "测试书籍描述",
+  "category": "玄幻",
+  "status": "连载中",
+  "word_count": 100000
+}
+
+### 更新书籍
+PUT {{baseUrl}}/books/1
+Content-Type: application/json
+
+{
+  "title": "更新后的测试书籍",
+  "author": "更新后的测试作者",
+  "cover": "https://example.com/updated_cover.jpg",
+  "description": "更新后的测试书籍描述",
+  "category": "奇幻",
+  "status": "已完结",
+  "word_count": 200000
+}
+
+### 删除书籍
+DELETE {{baseUrl}}/books/1
+
+### 获取书籍相关推荐
+GET {{baseUrl}}/books/1/related
+
+### 获取书籍评论
+GET {{baseUrl}}/books/1/comments
+
+## 章节管理
+### 获取书籍章节
+GET {{baseUrl}}/books/2/chapters
+
+### 根据 ID 获取章节
+GET {{baseUrl}}/books/1/chapters/1
+
+### 添加章节
+POST {{baseUrl}}/books/1/chapters/1
+Content-Type: application/json
+
+{
+  "title": "测试章节",
+  "content": "测试章节内容",
+  "id": 1,
+  "is_vip": false
+}
+
+### 更新章节
+PUT {{baseUrl}}/books/1/chapters/1
+Content-Type: application/json
+
+{
+  "title": "更新后的测试章节",
+  "content": "更新后的测试章节内容",
+  "id": 1,
+  "is_vip": false
+}
+
+### 删除章节
+DELETE {{baseUrl}}/books/1/chapters/1
+
+## 分类管理
+### 根据分类获取书籍
+GET {{baseUrl}}/categories/玄幻奇幻/books
+
+## 搜索功能
+### 搜索书籍
+GET {{baseUrl}}/books/search?keyword=网游&page=1&page_size=10
+
+### 搜索用户
+GET {{baseUrl}}/users/search?keyword=13800138037&page=1&page_size=10
+
+### 搜索评论
+GET {{baseUrl}}/comments/search?keyword=测试&page=1&page_size=10
+
+## 排行榜管理
+### 获取点击榜
+GET {{baseUrl}}/ranks/click
+
+### 获取新书榜
+GET {{baseUrl}}/ranks/new
+
+### 获取更新榜
+GET {{baseUrl}}/ranks/update
+
+### 获取评论榜
+GET {{baseUrl}}/ranks/comment
+
+### 添加排行榜（需要管理员权限）
+POST {{baseUrl}}/ranks/click
+Content-Type: application/json
+
+{
+  "book_id": 1,
+  "order": 1
+}
+
+### 删除排行榜（需要管理员权限）
+DELETE {{baseUrl}}/ranks/click/1
+
+### 更新排行榜（需要管理员权限）
+PUT {{baseUrl}}/ranks/click
+Content-Type: application/json
+
+[
+  {
+    "id": 1,
+    "book_id": 1,
+    "order": 2
+  },
+  {
+    "id": 2,
+    "book_id": 2,
+    "order": 1
+  }
+]
+
+## 推荐管理
+### 获取精选推荐
+GET {{baseUrl}}/rcmd/curated
+
+### 获取热门推荐
+GET {{baseUrl}}/rcmd/hot
+
+### 获取新书推荐
+GET {{baseUrl}}/rcmd/new
+
+### 获取排行榜推荐
+GET {{baseUrl}}/rcmd/top
+
+### 添加推荐（需要管理员权限）
+POST {{baseUrl}}/rcmd/curated
+Content-Type: application/json
+
+{
+  "book_id": 1,
+  "order": 1
+}
+
+### 删除推荐（需要管理员权限）
+DELETE {{baseUrl}}/rcmd/curated/1
+
+### 更新推荐列表（需要管理员权限）
+PUT {{baseUrl}}/rcmd/curated
+Content-Type: application/json
+
+[
+  {
+    "id": 1,
+    "book_id": 1,
+    "order": 2
+  },
+  {
+    "id": 2,
+    "book_id": 2,
+    "order": 1
+  }
+]
+
+## 用户管理
+### 用户登录
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "testpassword"
+}
+
+### 用户注册
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "username": "newuser",
+  "password": "newpassword",
+  "email": "newuser@example.com"
+}
+
+### 获取用户信息
+GET {{baseUrl}}/users/1
+
+### 根据用户名获取用户信息
+GET {{baseUrl}}/users/info/烽火戏诸侯
+
+### 更新用户信息（需要认证）
+PUT {{baseUrl}}/users/1
+Content-Type: application/json
+
+{
+  "username": "updateduser",
+  "nickname": "更新后的昵称",
+  "email": "updated@example.com",
+  "phone": "13800138000",
+  "bio": "更新后的个人简介"
+}
+
+## 书架管理
+### 获取用户书架
+GET {{baseUrl}}/users/1/shelf
+
+### 添加到书架
+POST {{baseUrl}}/users/1/shelf
+Content-Type: application/json
+
+{
+  "book_id": 1
+}
+
+### 从书架移除
+DELETE {{baseUrl}}/users/1/shelf/1
+
+## 阅读历史
+### 获取用户阅读历史
+GET {{baseUrl}}/users/1/history
+
+### 更新阅读进度
+POST {{baseUrl}}/users/1/books/1/progress
+Content-Type: application/json
+
+{
+  "chapter_id": 1,
+  "progress": 50
+}
+
+## 评论管理
+### 获取评论列表（需要管理员权限）
+GET {{baseUrl}}/comments?keyword=测试&page=1&page_size=10
+
+### 删除评论（需要管理员权限）
+DELETE {{baseUrl}}/comments/1
+
+## 作者功能
+### 获取作者信息
+GET {{baseUrl}}/author/info/1
+
+### 获取作者书籍
+GET {{baseUrl}}/author/books/1
+
+### 获取作者统计
+GET {{baseUrl}}/author/stats/1
+
+### 作者添加书籍（需要作者权限）
+POST {{baseUrl}}/author/books
+Content-Type: application/json
+
+{
+  "title": "作者添加的书籍",
+  "author": "测试作者",
+  "cover": "https://example.com/cover.jpg",
+  "description": "作者添加的书籍描述",
+  "category": "玄幻",
+  "status": "连载中",
+  "word_count": 100000
+}
+
+### 作者更新书籍（需要作者权限）
+PUT {{baseUrl}}/author/books/1
+Content-Type: application/json
+
+{
+  "title": "作者更新后的书籍",
+  "author": "测试作者",
+  "cover": "https://example.com/updated_cover.jpg",
+  "description": "作者更新后的书籍描述",
+  "category": "奇幻",
+  "status": "已完结",
+  "word_count": 200000
+}
+
+### 作者删除书籍（需要作者权限）
+DELETE {{baseUrl}}/author/books/1
+
+### 作者添加章节（需要作者权限）
+POST {{baseUrl}}/author/books/1/chapters
+Content-Type: application/json
+
+{
+  "title": "作者添加的章节",
+  "content": "作者添加的章节内容",
+  "id": 1,
+  "is_vip": false
+}
+
+### 作者更新章节（需要作者权限）
+PUT {{baseUrl}}/author/books/1/chapters/1
+Content-Type: application/json
+
+{
+  "title": "作者更新后的章节",
+  "content": "作者更新后的章节内容",
+  "id": 1,
+  "is_vip": false
+}
+
+### 作者删除章节（需要作者权限）
+DELETE {{baseUrl}}/author/books/1/chapters/1

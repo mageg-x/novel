@@ -17,10 +17,10 @@
 <script setup>
 // 可维护的链接数据（便于后续国际化或配置化）
 const footerLinks = [
-  { text: '关闭通道', url: '#' },
-  { text: '小说地图屋', url: '#' },
-  { text: '网站屋屋', url: '#' },
-  { text: '作家实实', url: '#' }
+  { text: '起点中文网', url: 'https://www.qidian.com' },
+  { text: '17k小说', url: 'https://www.17k.com' },
+  { text: '飞卢小说', url: 'https://www.faloo.com' },
+  { text: '晋江文学城 ', url: 'https://www.jjwxc.net' }
 ]
 </script>
 

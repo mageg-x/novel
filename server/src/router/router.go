@@ -2,10 +2,12 @@ package router
 
 import (
 	"net/http"
+	"path"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/mageg-x/novel/src/handler"
+	"github.com/mageg-x/novel/src/web"
 )
 
 // SetupRouter 配置路由
@@ -99,6 +101,24 @@ func SetupRouter() *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
 		})
+	})
+
+	// 静态文件服务
+	// 提供dist目录下的静态文件
+	fs := http.FileServer(http.FS(web.WebDistFS))
+	r.GET("/assets/*filepath", func(c *gin.Context) {
+		c.Request.URL.Path = path.Join("dist", c.Request.URL.Path)
+		fs.ServeHTTP(c.Writer, c.Request)
+	})
+
+	// 单页应用路由处理，所有未匹配的路由都返回index.html
+	r.NoRoute(func(c *gin.Context) {
+		file, err := web.WebDistFS.ReadFile("dist/index.html")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "index.html not found")
+			return
+		}
+		c.Data(http.StatusOK, "text/html; charset=utf-8", file)
 	})
 
 	return r

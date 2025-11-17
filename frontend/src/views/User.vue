@@ -65,17 +65,9 @@
               <!-- 编辑头像提示 -->
               <button v-if="isEditing"
                 class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-2 shadow-md hover:bg-primary/90 transition-colors cursor-pointer"
-                @click="avatarInput.click()">
-                <i class="fas fa-camera"></i>
+                @click="generateRandomAvatar">
+                <i class="fas fa-random"></i>
               </button>
-              <!-- 隐藏的文件输入框 -->
-              <input 
-                ref="avatarInput"
-                type="file" 
-                accept="image/*" 
-                class="hidden"
-                @change="handleAvatarChange"
-              >
             </div>
             <h1 class="text-3xl font-bold text-gray-800 mt-4">{{ userInfo.nickname || userInfo.username }}</h1>
             <p class="text-gray-600 mt-1 flex items-center justify-center">
@@ -251,8 +243,6 @@ const isEditing = ref(false)
 const editForm = ref({})
 // 头像预览
 const previewAvatar = ref('')
-// 头像文件输入框引用
-const avatarInput = ref(null)
 // 加载状态
 const isLoading = ref(false)
 // 提示信息
@@ -265,31 +255,17 @@ const handleTabChange = (tab) => {
   activeTab.value = tab
 }
 
-// 处理头像文件选择
-const handleAvatarChange = (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-  
-  // 检查文件类型
-  if (!file.type.startsWith('image/')) {
-    showMessage('请选择图片文件', 'error')
-    return
-  }
-  
-  // 检查文件大小（限制为2MB）
-  if (file.size > 2 * 1024 * 1024) {
-    showMessage('图片大小不能超过2MB', 'error')
-    return
-  }
-  
-  // 生成预览URL
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    previewAvatar.value = e.target.result
-    // 更新编辑表单中的头像
-    editForm.value.avatar = previewAvatar.value
-  }
-  reader.readAsDataURL(file)
+// 生成随机头像
+const generateRandomAvatar = () => {
+  // 使用随机字符串作为seed
+  const seed = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  // 生成DiceBear头像URL
+  const avatarUrl = `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}`
+  // 更新预览头像
+  previewAvatar.value = avatarUrl
+  // 更新编辑表单中的头像
+  editForm.value.avatar = avatarUrl
+  showMessage('头像已更新', 'success')
 }
 
 // 回退和首页跳转方法
@@ -428,10 +404,6 @@ const handleCancelEdit = () => {
   }
   // 清除头像预览
   previewAvatar.value = ''
-  // 重置文件输入框
-  if (avatarInput.value) {
-    avatarInput.value.value = ''
-  }
   // 退出编辑模式
   isEditing.value = false
 }

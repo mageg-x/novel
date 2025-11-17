@@ -2,7 +2,7 @@
   <transition name="notice">
     <div v-if="visible" class="fixed inset-0 flex items-center justify-center z-50 p-4">
       <!-- 半透明浅灰色遮罩 -->
-      <div class="fixed inset-0 bg-black  opacity-30 z-0"></div>
+      <div class="fixed inset-0 bg-black  opacity-30 "></div>
       <!-- 提示框内容 -->
       <div
         class="  bg-white rounded-lg shadow-md p-3 sm:p-4 w-full max-w-xs sm:max-w-sm mx-auto relative z-10 transform transition-all duration-300 min-w-[240px] border border-gray-100">

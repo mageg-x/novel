@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/sirupsen/logrus"
 
 	"github.com/mageg-x/novel/src/log"
@@ -10,7 +11,7 @@ import (
 
 var (
 	logger  = log.GetLogger("novel")
-	verbose = 4
+	verbose = 0
 )
 
 func init() {
@@ -50,6 +51,10 @@ func setLogLevel() {
 }
 
 func main() {
+	// 解析命令行参数
+	addr := flag.String("a", "0.0.0.0:3002", "服务器监听地址和端口")
+	flag.Parse()
+
 	logger.Info("开始启动小说阅读系统...")
 
 	// 初始化数据库
@@ -71,10 +76,9 @@ func main() {
 	logger.Info("路由配置完成")
 
 	// 启动服务器
-	serverAddr := ":8000"
-	logger.Infof("服务器启动成功，监听地址: http://localhost%s", serverAddr)
+	logger.Infof("服务器启动成功，监听地址: http://%s", *addr)
 
-	if err := r.Run(serverAddr); err != nil {
+	if err := r.Run(*addr); err != nil {
 		logger.Fatalf("服务器启动失败: %v", err)
 	}
 }

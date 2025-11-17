@@ -12,7 +12,7 @@
     </searchBar.define>
 
     <!-- 顶部导航栏 -->
-    <header class="bg-white shadow-sm sticky top-0 z-50 md:w-5xl mx-auto">
+    <header class="bg-white shadow-sm sticky  top-0 z-10 md:w-5xl mx-auto">
         <!-- 小屏幕第一行：Logo、书架图标、用户图标 -->
         <div class="container mx-auto px-4 py-4 flex items-center justify-between">
             <router-link to="/" class="flex items-center space-x-2 cursor-pointer">
@@ -28,6 +28,12 @@
             </div>
 
             <div class="flex items-center space-x-4">
+                <!-- 项目开源链接 -->
+                <a href="https://github.com/mageg-x/novel" target="_blank" rel="noopener noreferrer"
+                    class="hidden md:inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors">
+                    <i class="fab fa-github text-xl"></i>
+                    <span>开源</span>
+                </a>
                 <!-- 小屏幕显示书架图标 -->
                 <router-link to="/history" class="md:hidden text-gray-600 hover:text-primary transition-colors">
                     <i class="fa-solid fa-swatchbook text-primary"></i>

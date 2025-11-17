@@ -8,12 +8,8 @@ import (
 	"sync"
 
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/analysis"
-	"github.com/blevesearch/bleve/v2/analysis/analyzer/custom"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
-	"github.com/blevesearch/bleve/v2/registry"
-	"github.com/yanyiwu/gojieba"
 
 	"github.com/mageg-x/novel/src/model"
 )
@@ -26,109 +22,11 @@ type SearchService struct {
 	indexDir     string
 }
 
-// GoJiebaTokenizer 自定义分词器
-type GoJiebaTokenizer struct {
-	jieba *gojieba.Jieba
-}
-
-// NewGoJiebaTokenizer 创建新的分词器
-func NewGoJiebaTokenizer() *GoJiebaTokenizer {
-	return &GoJiebaTokenizer{
-		jieba: gojieba.NewJieba(),
-	}
-}
-
-// Tokenize 实现分词接口
-func (t *GoJiebaTokenizer) Tokenize(input []byte) analysis.TokenStream {
-	result := make(analysis.TokenStream, 0)
-
-	// 使用 gojieba 进行分词
-	words := t.jieba.Cut(string(input), true)
-
-	position := 0
-	for _, word := range words {
-		if len(word) == 0 {
-			continue
-		}
-
-		token := analysis.Token{
-			Term:     []byte(word),
-			Start:    position,
-			End:      position + len(word),
-			Position: position + 1,
-			Type:     analysis.Ideographic,
-		}
-		result = append(result, &token)
-		position += len(word)
-	}
-
-	return result
-}
-
-// Free 释放资源
-func (t *GoJiebaTokenizer) Free() {
-	if t.jieba != nil {
-		t.jieba.Free()
-	}
-}
-
-// GoJiebaTokenizerName 分词器名称
-const GoJiebaTokenizerName = "gojieba"
-
-// GoJiebaTokenizerConstructor 分词器构造函数
-func GoJiebaTokenizerConstructor(config map[string]interface{}, cache *registry.Cache) (analysis.Tokenizer, error) {
-	return NewGoJiebaTokenizer(), nil
-}
-
-// 简单的停用词过滤器
-type ChineseStopFilter struct {
-	stopWords map[string]struct{}
-}
-
-// NewChineseStopFilter 创建中文停用词过滤器
-func NewChineseStopFilter(stopWords []string) *ChineseStopFilter {
-	filter := &ChineseStopFilter{
-		stopWords: make(map[string]struct{}),
-	}
-	for _, word := range stopWords {
-		filter.stopWords[word] = struct{}{}
-	}
-	return filter
-}
-
-// Filter 实现停用词过滤
-func (f *ChineseStopFilter) Filter(input analysis.TokenStream) analysis.TokenStream {
-	output := make(analysis.TokenStream, 0, len(input))
-
-	for _, token := range input {
-		if _, isStop := f.stopWords[string(token.Term)]; !isStop {
-			output = append(output, token)
-		}
-	}
-
-	return output
-}
-
-const ChineseStopFilterName = "chinese_stop"
-
-func ChineseStopFilterConstructor(config map[string]interface{}, cache *registry.Cache) (analysis.TokenFilter, error) {
-	// 中文停用词列表
-	chineseStopWords := []string{"的", "了", "在", "是", "我", "有", "和", "就", "不", "人", "都", "一", "一个", "上", "也", "很", "到", "说", "要", "去", "你", "会", "着", "没有", "看", "好", "自己", "这", "那", "他", "她", "它"}
-	return NewChineseStopFilter(chineseStopWords), nil
-}
-
 // 全局搜索服务实例
 var (
 	SService = newSearchService()
 	mu       = sync.Mutex{}
 )
-
-func init() {
-	// 注册自定义分词器
-	registry.RegisterTokenizer(GoJiebaTokenizerName, GoJiebaTokenizerConstructor)
-	// 注册中文停用词过滤器
-	registry.RegisterTokenFilter(ChineseStopFilterName, ChineseStopFilterConstructor)
-}
 
 func newSearchService() *SearchService {
 	indexDir := filepath.Join(DataDir, "search")
@@ -256,159 +154,6 @@ func (s *SearchService) openOrCreateIndex(indexPath string, mappingFunc func() *
 
 func (s *SearchService) createBookMapping() *mapping.IndexMappingImpl {
 	indexMapping := bleve.NewIndexMapping()
-
-	// 添加自定义中文分析器
-	err := indexMapping.AddCustomAnalyzer("chinese_analyzer", map[string]interface{}{
-		"type":      custom.Name,
-		"tokenizer": GoJiebaTokenizerName,
-		"token_filters": []string{
-			"lowercase",
-			ChineseStopFilterName,
-		},
-	})
-	if err != nil {
-		logger.Errorf("创建中文分析器失败: %v", err)
-		return s.createBookMappingFallback()
-	}
-
-	bookMapping := bleve.NewDocumentMapping()
-
-	// ID 字段
-	idField := bleve.NewNumericFieldMapping()
-	idField.Store = true
-	idField.Index = true
-	bookMapping.AddFieldMappingsAt("ID", idField)
-
-	// 标题字段 - 使用中文分词
-	titleField := bleve.NewTextFieldMapping()
-	titleField.Store = true
-	titleField.Index = true
-	titleField.Analyzer = "chinese_analyzer"
-	bookMapping.AddFieldMappingsAt("Title", titleField)
-
-	// 作者字段 - 使用中文分词
-	authorField := bleve.NewTextFieldMapping()
-	authorField.Store = true
-	authorField.Index = true
-	authorField.Analyzer = "chinese_analyzer"
-	bookMapping.AddFieldMappingsAt("Author", authorField)
-
-	// 描述字段 - 使用中文分词
-	descField := bleve.NewTextFieldMapping()
-	descField.Store = true
-	descField.Index = true
-	descField.Analyzer = "chinese_analyzer"
-	bookMapping.AddFieldMappingsAt("Description", descField)
-
-	indexMapping.DefaultMapping = bookMapping
-	indexMapping.DefaultAnalyzer = "chinese_analyzer"
-	return indexMapping
-}
-
-func (s *SearchService) createUserMapping() *mapping.IndexMappingImpl {
-	indexMapping := bleve.NewIndexMapping()
-
-	// 添加自定义中文分析器
-	err := indexMapping.AddCustomAnalyzer("chinese_analyzer", map[string]interface{}{
-		"type":      custom.Name,
-		"tokenizer": GoJiebaTokenizerName,
-		"token_filters": []string{
-			"lowercase",
-		},
-	})
-	if err != nil {
-		logger.Errorf("创建中文分析器失败: %v", err)
-		return s.createUserMappingFallback()
-	}
-
-	userMapping := bleve.NewDocumentMapping()
-
-	// ID 字段
-	idField := bleve.NewNumericFieldMapping()
-	idField.Store = true
-	idField.Index = true
-	userMapping.AddFieldMappingsAt("ID", idField)
-
-	// 用户名字段 - 使用中文分词
-	usernameField := bleve.NewTextFieldMapping()
-	usernameField.Store = true
-	usernameField.Index = true
-	usernameField.Analyzer = "chinese_analyzer"
-	userMapping.AddFieldMappingsAt("Username", usernameField)
-
-	// 昵称字段 - 使用中文分词
-	nicknameField := bleve.NewTextFieldMapping()
-	nicknameField.Store = true
-	nicknameField.Index = true
-	nicknameField.Analyzer = "chinese_analyzer"
-	userMapping.AddFieldMappingsAt("Nickname", nicknameField)
-
-	// 电话字段 - 不使用分词，使用关键字分析器
-	phoneField := bleve.NewTextFieldMapping()
-	phoneField.Store = true
-	phoneField.Index = true
-	phoneField.Analyzer = standard.Name
-	userMapping.AddFieldMappingsAt("Phone", phoneField)
-
-	indexMapping.DefaultMapping = userMapping
-	indexMapping.DefaultAnalyzer = "chinese_analyzer"
-	return indexMapping
-}
-
-func (s *SearchService) createCommentMapping() *mapping.IndexMappingImpl {
-	indexMapping := bleve.NewIndexMapping()
-
-	// 添加自定义中文分析器
-	err := indexMapping.AddCustomAnalyzer("chinese_analyzer", map[string]interface{}{
-		"type":      custom.Name,
-		"tokenizer": GoJiebaTokenizerName,
-		"token_filters": []string{
-			"lowercase",
-			ChineseStopFilterName,
-		},
-	})
-	if err != nil {
-		logger.Errorf("创建中文分析器失败: %v", err)
-		return s.createCommentMappingFallback()
-	}
-
-	commentMapping := bleve.NewDocumentMapping()
-
-	// ID 字段
-	idField := bleve.NewNumericFieldMapping()
-	idField.Store = true
-	idField.Index = true
-	commentMapping.AddFieldMappingsAt("ID", idField)
-
-	// 书籍标题字段 - 使用中文分词
-	bookTitleField := bleve.NewTextFieldMapping()
-	bookTitleField.Store = true
-	bookTitleField.Index = true
-	bookTitleField.Analyzer = "chinese_analyzer"
-	commentMapping.AddFieldMappingsAt("BookTitle", bookTitleField)
-
-	// 内容字段 - 使用中文分词
-	contentField := bleve.NewTextFieldMapping()
-	contentField.Store = true
-	contentField.Index = true
-	contentField.Analyzer = "chinese_analyzer"
-	commentMapping.AddFieldMappingsAt("Content", contentField)
-
-	// 用户昵称字段 - 使用中文分词
-	userNicknameField := bleve.NewTextFieldMapping()
-	userNicknameField.Store = true
-	userNicknameField.Index = true
-	userNicknameField.Analyzer = "chinese_analyzer"
-	commentMapping.AddFieldMappingsAt("UserNickname", userNicknameField)
-
-	indexMapping.DefaultMapping = commentMapping
-	indexMapping.DefaultAnalyzer = "chinese_analyzer"
-	return indexMapping
-}
-
-// 回退映射（如果中文分析器创建失败）
-func (s *SearchService) createBookMappingFallback() *mapping.IndexMappingImpl {
-	indexMapping := bleve.NewIndexMapping()
 	bookMapping := bleve.NewDocumentMapping()
 
 	// ID 字段
@@ -442,7 +187,7 @@ func (s *SearchService) createBookMappingFallback() *mapping.IndexMappingImpl {
 	return indexMapping
 }
 
-func (s *SearchService) createUserMappingFallback() *mapping.IndexMappingImpl {
+func (s *SearchService) createUserMapping() *mapping.IndexMappingImpl {
 	indexMapping := bleve.NewIndexMapping()
 	userMapping := bleve.NewDocumentMapping()
 
@@ -470,7 +215,7 @@ func (s *SearchService) createUserMappingFallback() *mapping.IndexMappingImpl {
 	return indexMapping
 }
 
-func (s *SearchService) createCommentMappingFallback() *mapping.IndexMappingImpl {
+func (s *SearchService) createCommentMapping() *mapping.IndexMappingImpl {
 	indexMapping := bleve.NewIndexMapping()
 	commentMapping := bleve.NewDocumentMapping()
 
@@ -562,8 +307,7 @@ func (s *SearchService) SearchBooks(query string, limit, offset int) ([]model.Bo
 	}
 	defer mu.Unlock()
 
-	// 使用 MatchQuery 而不是 QueryStringQuery，更好地支持中文分词
-	searchRequest := bleve.NewSearchRequest(bleve.NewMatchQuery(query))
+	searchRequest := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
 	searchRequest.From = offset
 	searchRequest.Size = limit
 
@@ -593,30 +337,12 @@ func (s *SearchService) SearchUsers(query string, limit, offset int) ([]model.Us
 	}
 	defer mu.Unlock()
 
-	// 如果是纯数字，使用通配符查询电话号码
+	// 电话号码支持部分匹配
 	if isNumeric(query) {
-		wildcardQuery := bleve.NewWildcardQuery("*" + query + "*")
-		searchRequest := bleve.NewSearchRequest(wildcardQuery)
-		searchRequest.From = offset
-		searchRequest.Size = limit
-
-		searchResult, err := s.userIndex.Search(searchRequest)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		var users []model.User
-		for _, hit := range searchResult.Hits {
-			var user model.User
-			if err := DB.First(&user, hit.ID).Error; nil == err {
-				users = append(users, user)
-			}
-		}
-		return users, int64(searchResult.Total), nil
+		query = "*" + query + "*"
 	}
 
-	// 对于中文文本，使用 MatchQuery
-	searchRequest := bleve.NewSearchRequest(bleve.NewMatchQuery(query))
+	searchRequest := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
 	searchRequest.From = offset
 	searchRequest.Size = limit
 
@@ -645,13 +371,7 @@ func (s *SearchService) SearchComments(query string, limit, offset int) ([]model
 	}
 	defer mu.Unlock()
 
-	// 使用 MatchPhraseQuery 更好地处理中文短语
-	var searchRequest *bleve.SearchRequest
-	if isChinesePhrase(query) {
-		searchRequest = bleve.NewSearchRequest(bleve.NewMatchPhraseQuery(query))
-	} else {
-		searchRequest = bleve.NewSearchRequest(bleve.NewMatchQuery(query))
-	}
+	searchRequest := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
 	searchRequest.From = offset
 	searchRequest.Size = limit
 
@@ -722,17 +442,4 @@ func isNumeric(s string) bool {
 		}
 	}
 	return len(s) > 0
-}
-
-// isChinesePhrase 判断是否为中文短语
-func isChinesePhrase(s string) bool {
-	// 简单的判断：包含中文字符且长度适中
-	hasChinese := false
-	for _, r := range s {
-		if r >= '\u4e00' && r <= '\u9fff' {
-			hasChinese = true
-			break
-		}
-	}
-	return hasChinese && len([]rune(s)) <= 10
 }
