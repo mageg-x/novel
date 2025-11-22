@@ -12,6 +12,7 @@ import Admin from "@/views/Admin.vue";
 import Login from "@/views/Login.vue";
 import Register from "@/views/Register.vue";
 import User from "@/views/User.vue";
+import Search from "@/views/Search.vue";
 
 const routes = [
   { path: "/", redirect: "/home" },
@@ -88,6 +89,11 @@ const routes = [
       requiresAuth: true, // 需要登录才能访问
       requiresAdmin: true // 需要管理员身份才能访问
     }
+  },
+  {
+    path: "/search",
+    name: "search",
+    component: Search
   },
 ];
 

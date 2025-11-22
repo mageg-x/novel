@@ -222,7 +222,7 @@
   <!-- 小屏幕 -->
   <div class="block md:hidden">
     <!-- 底部导航 -->
-    <ToolBar :activeTab="activeTab" @tab-change="handleTabChange" />
+    <!-- <ToolBar :activeTab="activeTab" @tab-change="handleTabChange" /> -->
   </div>
 </template>
 

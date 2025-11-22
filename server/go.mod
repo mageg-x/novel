@@ -1,6 +1,8 @@
 module github.com/mageg-x/novel
 
-go 1.24.2
+go 1.24.0
+
+toolchain go1.24.2
 
 require (
 	github.com/blevesearch/bleve/v2 v2.5.5

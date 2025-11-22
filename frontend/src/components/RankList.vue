@@ -9,10 +9,17 @@
                     class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded card-hover cursor-pointer"
                     @click="navigateToBook(book.id)">
                     <span :class="[
-                        'w-6 h-6  rounded-sm flex items-center justify-center text-sm',
-                        index < 3
-                            ? 'bg-primary text-white'
-                            : 'bg-gray-600 text-white'
+                        'w-6 h-6 min-w-6  rounded-sm flex items-center justify-center text-sm text-white',
+                        index === 0 ? 'bg-red-600' :
+                        index === 1 ? 'bg-orange-500' :
+                        index === 2 ? 'bg-yellow-500' :
+                        index === 3 ? 'bg-green-500' :
+                        index === 4 ? 'bg-blue-500' :
+                        index === 5 ? 'bg-indigo-500' :
+                        index === 6 ? 'bg-purple-500' :
+                        index === 7 ? 'bg-pink-500' :
+                        index === 8 ? 'bg-gray-600' :
+                        'bg-gray-500'
                     ]">
                         {{ index + 1 }}
                     </span>
@@ -21,7 +28,7 @@
 
                     <div>
                         <h4 class="text-sm font-medium">{{ book.title }}</h4>
-                        <p v-if="book.description" class="text-xs text-gray-500">
+                        <p v-if="book.description" class="text-xs pr-2 text-gray-500 line-clamp-3">
                             {{ book.description }}
                         </p>
                     </div>
@@ -81,5 +88,13 @@ const navigateToBook = (bookId) => {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
     transition: all 0.2s ease;
     cursor: pointer;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 </style>

@@ -2,8 +2,13 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/sirupsen/logrus"
 
+	"github.com/mageg-x/novel/src/assets"
 	"github.com/mageg-x/novel/src/log"
 	"github.com/mageg-x/novel/src/router"
 	"github.com/mageg-x/novel/src/service"
@@ -11,7 +16,7 @@ import (
 
 var (
 	logger  = log.GetLogger("novel")
-	verbose = 0
+	verbose = 3
 )
 
 func init() {
@@ -26,6 +31,15 @@ func init() {
 
 	setLogLevel()
 	logger.Info("日志系统初始化完成")
+
+	// 注册退出清理
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		assets.Cleanup()
+		os.Exit(0)
+	}()
 }
 
 // setLogLevel 根据 verbose 级别设置日志级别

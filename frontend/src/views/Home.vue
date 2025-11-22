@@ -140,8 +140,8 @@
                                 {{ currentBook.description }}
                             </p>
                             <div class="mb-4">
-                                <span class="text-sm text-gray-500">简介：</span>
-                                <span class="text-sm">{{ currentBook.tagline || '暂无简介' }}</span>
+                                <span class="text-sm text-gray-500">作者：</span>
+                                <span class="text-sm">{{ currentBook.author || '暂无简介' }}</span>
                             </div>
                             <a href="#"
                                 class="inline-block bg-primary hover:bg-dark text-white px-4 py-2 rounded-md transition-colors cursor-pointer"

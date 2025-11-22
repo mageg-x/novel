@@ -55,12 +55,18 @@ func InitDB() error {
 	// SQLite 时间格式支持
 	DB.Exec("PRAGMA foreign_keys = ON;")
 	DB.Exec("PRAGMA journal_mode = WAL;")
+	// 启用查询缓存
+	DB.Exec("PRAGMA cache_size = -8000;") // 8MB缓存
+	DB.Exec("PRAGMA synchronous = NORMAL;")
 
 	// 自动迁移数据库表结构
-	if err := DB.AutoMigrate(&model.Book{}, &model.Chapter{}, &model.Rcmd{}, &model.Rank{}, &model.User{}, &model.Shelf{}, &model.History{}, &model.Comment{}); err != nil {
+	if err := DB.AutoMigrate(&model.Book{}, &model.Volume{}, &model.Chapter{}, &model.Rcmd{}, &model.Rank{}, &model.User{}, &model.Shelf{}, &model.History{}, &model.Comment{}); err != nil {
 		logger.Errorf("数据库迁移失败: %v", err)
 		return err
 	}
+
+	// 索引已在模型定义中通过gorm标签指定(index:idx_books_update_time, index:idx_books_category)
+	// AutoMigrate会自动创建这些索引，无需手动执行SQL语句
 
 	return nil
 }
@@ -78,13 +84,15 @@ func (s *BookService) GetAllBooks(offset, limit int) ([]model.Book, int64, error
 	var books []model.Book
 	var total int64
 
-	// 计算总数
+	// 优化Count查询，使用更高效的方式获取总数
+	// 对于SQLite，直接使用COUNT(*) 是最高效的，但我们可以添加缓存来优化重复查询
 	if err := DB.Model(&model.Book{}).Count(&total).Error; err != nil {
 		logger.Errorf("获取书籍总数失败: %v", err)
 		return nil, 0, err
 	}
 
-	// 获取分页数据
+	// 优化分页查询，利用update_time索引提升排序性能
+	// 移除或减少预加载以提升性能，Volumes和Chapters可以在需要时单独查询
 	err := DB.Offset(offset).Limit(limit).Order("update_time desc").Find(&books).Error
 	if err != nil {
 		logger.Errorf("获取书籍分页数据失败[偏移: %d, 限制: %d]: %v", offset, limit, err)
@@ -100,7 +108,7 @@ func (s *BookService) GetBookByID(id uint) (*model.Book, error) {
 		return nil, fmt.Errorf("数据库连接未初始化")
 	}
 	var book model.Book
-	err := DB.First(&book, id).Error
+	err := DB.Preload("Volumes").Preload("Chapters").First(&book, id).Error
 	if err != nil {
 		logger.Errorf("获取书籍失败[ID: %d]: %v", id, err)
 		return nil, err
@@ -118,13 +126,14 @@ func (s *BookService) GetBooksByCategory(category string, offset, limit int) ([]
 	var books []model.Book
 	var total int64
 
-	// 计算总数
+	// 优化Count查询，利用category索引
 	if err := DB.Model(&model.Book{}).Where("category = ?", category).Count(&total).Error; err != nil {
 		logger.Errorf("获取分类[%s]书籍总数失败: %v", category, err)
 		return nil, 0, err
 	}
 
-	// 获取分页数据
+	// 优化分页查询，利用category和update_time索引提升性能
+	// 移除预加载以提升性能
 	err := DB.Where("category = ?", category).Offset(offset).Limit(limit).Order("update_time desc").Find(&books).Error
 	if err != nil {
 		logger.Errorf("获取分类[%s]书籍数据失败: %v", category, err)
@@ -196,6 +205,12 @@ func (s *BookService) DeleteBook(id uint) error {
 			return err
 		}
 
+		// 删除书籍的卷
+		if err := tx.Where("book_id = ?", id).Delete(&model.Volume{}).Error; err != nil {
+			logger.Errorf("删除书籍卷失败[书籍ID: %d]: %v", id, err)
+			return err
+		}
+
 		// 删除书籍
 		if err := tx.Delete(&model.Book{}, id).Error; err != nil {
 			logger.Errorf("删除书籍失败[ID: %d, 标题: %s]: %v", id, book.Title, err)
@@ -203,6 +218,139 @@ func (s *BookService) DeleteBook(id uint) error {
 		}
 
 		logger.Infof("删除书籍成功[ID: %d, 标题: %s]", id, book.Title)
+		return nil
+	})
+}
+
+// 卷服务
+// 添加卷
+func (s *BookService) AddVolume(volume *model.Volume) error {
+	if volume == nil {
+		logger.Errorf("添加卷失败: 卷指针为nil")
+		return fmt.Errorf("卷指针为nil")
+	}
+	if DB == nil {
+		logger.Errorf("添加卷失败[书籍ID: %d, 卷序号: %d, 标题: %s]: 数据库连接未初始化",
+			volume.BookID, volume.VolumeNo, volume.Title)
+		return fmt.Errorf("数据库连接未初始化")
+	}
+
+	err := DB.Create(volume).Error
+	if err != nil {
+		logger.Errorf("添加卷失败[书籍ID: %d, 卷序号: %d, 标题: %s]: %v",
+			volume.BookID, volume.VolumeNo, volume.Title, err)
+		return err
+	}
+
+	logger.Infof("添加卷成功[书籍ID: %d, 卷序号: %d, 标题: %s]",
+		volume.BookID, volume.VolumeNo, volume.Title)
+	return nil
+}
+
+// 获取书籍的所有卷
+func (s *BookService) GetVolumesByBookID(bookID uint) ([]model.Volume, error) {
+	if DB == nil {
+		logger.Errorf("获取书籍卷失败[书籍ID: %d]: 数据库连接未初始化", bookID)
+		return nil, fmt.Errorf("数据库连接未初始化")
+	}
+	var volumes []model.Volume
+	err := DB.Where("book_id = ?", bookID).Order("volume_no ASC").Find(&volumes).Error
+	if err != nil {
+		logger.Errorf("获取书籍卷失败[书籍ID: %d]: %v", bookID, err)
+	}
+	return volumes, err
+}
+
+// 根据ID获取卷
+func (s *BookService) GetVolumeByNo(bookID, volumeNo uint) (*model.Volume, error) {
+	if DB == nil {
+		logger.Errorf("获取卷失败[书籍ID: %d, 卷序号: %d]: 数据库连接未初始化", bookID, volumeNo)
+		return nil, fmt.Errorf("数据库连接未初始化")
+	}
+
+	var volume model.Volume
+	err := DB.Where("book_id = ? AND volume_no = ?", bookID, volumeNo).First(&volume).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.Warnf("卷未找到[书籍ID: %d, 卷序号: %d]", bookID, volumeNo)
+			return nil, fmt.Errorf("卷不存在")
+		}
+		logger.Errorf("获取卷失败[书籍ID: %d, 卷序号: %d]: %v", bookID, volumeNo, err)
+		return nil, err
+	}
+
+	return &volume, nil
+}
+
+// 更新卷信息
+func (s *BookService) UpdateVolume(volume *model.Volume) error {
+	if volume == nil {
+		logger.Errorf("更新卷失败: 卷指针为nil")
+		return fmt.Errorf("卷指针为nil")
+	}
+	if DB == nil {
+		logger.Errorf("更新卷失败[书籍ID: %d, 卷序号: %d, 标题: %s]: 数据库连接未初始化",
+			volume.BookID, volume.VolumeNo, volume.Title)
+		return fmt.Errorf("数据库连接未初始化")
+	}
+
+	// 先查出数据库中的完整记录（含 ID）
+	var dbVolume model.Volume
+	if err := DB.Where("book_id = ? AND volume_no = ?", volume.BookID, volume.VolumeNo).First(&dbVolume).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("卷不存在")
+		}
+		logger.Errorf("查询卷失败[书籍ID: %d, 卷序号: %d]: %v", volume.BookID, volume.VolumeNo, err)
+		return err
+	}
+
+	// 用查到的 ID 来更新（内部使用，不暴露）
+	volume.ID = dbVolume.ID
+
+	if err := DB.Save(volume).Error; err != nil {
+		logger.Errorf("更新卷失败[书籍ID: %d, 卷序号: %d, 标题: %s]: %v",
+			volume.BookID, volume.VolumeNo, volume.Title, err)
+		return err
+	}
+
+	logger.Infof("更新卷成功[书籍ID: %d, 卷序号: %d, 标题: %s]",
+		volume.BookID, volume.VolumeNo, volume.Title)
+	return nil
+}
+
+// 删除卷
+func (s *BookService) DeleteVolume(bookID, volumeNo uint) error {
+	if DB == nil {
+		logger.Errorf("删除卷失败[书籍ID: %d, 卷序号: %d]: 数据库连接未初始化", bookID, volumeNo)
+		return fmt.Errorf("数据库连接未初始化")
+	}
+
+	// 先查一下是否存在（可选，也可直接删）
+	var volume model.Volume
+	if err := DB.Where("book_id = ? AND volume_no = ?", bookID, volumeNo).First(&volume).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("卷不存在")
+		}
+		logger.Errorf("查询卷失败[书籍ID: %d, 卷序号: %d]: %v", bookID, volumeNo, err)
+		return err
+	}
+
+	// 开启事务删除卷并更新相关章节的卷ID为NULL
+	return DB.Transaction(func(tx *gorm.DB) error {
+		// 将关联到此卷的章节的VolumeNo设为NULL
+		if err := tx.Model(&model.Chapter{}).Where("book_id = ? AND volume_no = ?", bookID, volume.ID).Update("volume_no", nil).Error; err != nil {
+			logger.Errorf("更新章节卷关联失败[书籍ID: %d, 卷ID: %d]: %v", bookID, volume.ID, err)
+			return err
+		}
+
+		// 删除卷
+		if err := tx.Where("book_id = ? AND volume_no = ?", bookID, volumeNo).Delete(&model.Volume{}).Error; err != nil {
+			logger.Errorf("删除卷失败[书籍ID: %d, 卷序号: %d]: %v", bookID, volumeNo, err)
+			return err
+		}
+
+		logger.Infof("删除卷成功[书籍ID: %d, 卷序号: %d, 标题: %s]",
+			bookID, volumeNo, volume.Title)
 		return nil
 	})
 }
@@ -223,37 +371,63 @@ func (s *BookService) GetChaptersByBookID(bookID uint) ([]model.Chapter, error) 
 	return chapters, err
 }
 
-// GetChapterByID 根据书籍ID和章节序号获取章节
-func (s *BookService) GetChapterByID(book_id, chapter_id uint) (*model.Chapter, error) {
+// GetChaptersByVolumeNo 获取某一卷的所有章节
+func (s *BookService) GetChaptersByVolumeNo(bookID, volumeNo uint) ([]model.Chapter, error) {
 	if DB == nil {
-		logger.Errorf("获取章节失败[书籍ID: %d, 章节ID: %d]: 数据库连接未初始化", book_id, chapter_id)
+		logger.Errorf("获取卷章节失败[书籍ID: %d, 卷序号: %d]: 数据库连接未初始化", bookID, volumeNo)
+		return nil, fmt.Errorf("数据库连接未初始化")
+	}
+
+	// 先获取卷的数据库ID
+	var volume model.Volume
+	if err := DB.Where("book_id = ? AND volume_no = ?", bookID, volumeNo).First(&volume).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.Warnf("卷未找到[书籍ID: %d, 卷序号: %d]", bookID, volumeNo)
+			return nil, fmt.Errorf("卷不存在")
+		}
+		logger.Errorf("获取卷信息失败[书籍ID: %d, 卷序号: %d]: %v", bookID, volumeNo, err)
+		return nil, err
+	}
+
+	var chapters []model.Chapter
+	err := DB.Where("book_id = ? AND volume_no = ?", bookID, volume.ID).Order("chapter_id ASC").Find(&chapters).Error
+	if err != nil {
+		logger.Errorf("获取卷章节失败[书籍ID: %d, 卷ID: %d]: %v", bookID, volume.ID, err)
+	}
+	return chapters, err
+}
+
+// GetChapterByID 根据书籍ID和章节序号获取章节
+func (s *BookService) GetChapterByID(bookID, volumeNo, chapterID uint) (*model.Chapter, error) {
+	if DB == nil {
+		logger.Errorf("获取章节失败[书籍ID: %d, 卷序号: %d, 章节No: %d]: 数据库连接未初始化", bookID, volumeNo, chapterID)
 		return nil, fmt.Errorf("数据库连接未初始化")
 	}
 
 	var chapter model.Chapter
-	err := DB.Where("book_id = ? AND chapter_id = ?", book_id, chapter_id).First(&chapter).Error
+	err := DB.Where("book_id = ? AND volume_no = ? AND chapter_id = ?", bookID, volumeNo, chapterID).First(&chapter).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.Warnf("章节未找到[书籍ID: %d, 章节ID: %d]", book_id, chapter_id)
+			logger.Warnf("章节未找到[书籍ID: %d, 卷序号: %d, 章节ID: %d]", bookID, volumeNo, chapterID)
 			return nil, fmt.Errorf("章节不存在")
 		}
-		logger.Errorf("获取章节失败[书籍ID: %d, 章节ID: %d]: %v", book_id, chapter_id, err)
+		logger.Errorf("获取章节失败[书籍ID: %d, 卷序号: %d, 章节ID: %d]: %v", bookID, volumeNo, chapterID, err)
 		return nil, err
 	}
 
-	contentPath := fmt.Sprintf("%s/%d/chap_%05d.txt", BooksDir, chapter.BookID, chapter.ChapterID)
+	contentPath := fmt.Sprintf("%s/%d/chap_%03d_%05d.txt", BooksDir, chapter.BookID, chapter.VolumeNo, chapter.ChapterID)
 	content, err := os.ReadFile(contentPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			logger.Warnf("章节内容文件不存在[路径: %s]", contentPath)
+			logger.Warnf("章节内容文件不存在[路径: %s, 书籍ID: %d, 卷序号: %d, 章节ID: %d]", contentPath, bookID, volumeNo, chapterID)
 			return &chapter, nil
 		}
-		logger.Errorf("读取章节内容失败[路径: %s]: %v", contentPath, err)
+		logger.Errorf("读取章节内容失败[路径: %s, 书籍ID: %d, 卷序号: %d, 章节ID: %d]: %v", contentPath, bookID, volumeNo, chapterID, err)
 		return nil, err
 	}
 
 	chapter.Content = string(content)
-	logger.Infof("成功读取章节内容[书籍ID: %d, 章节ID: %d]", book_id, chapter_id) // ✅ 只打业务ID
+	logger.Infof("成功读取章节内容[书籍ID: %d, 卷序号: %d, 章节ID: %d]", bookID, volumeNo, chapterID) // ✅ 只打业务ID
 	return &chapter, nil
 }
 
@@ -264,22 +438,23 @@ func (s *BookService) AddChapter(chapter *model.Chapter, content string) error {
 		return fmt.Errorf("章节指针为nil")
 	}
 	if DB == nil {
-		logger.Errorf("添加章节失败[书籍ID: %d, 章节ID: %d, 标题: %s]: 数据库连接未初始化",
-			chapter.BookID, chapter.ChapterID, chapter.Title)
+		logger.Errorf("添加章节失败[书籍ID: %d, 卷序号: %d, 章节ID: %d, 标题: %s]: 数据库连接未初始化",
+			chapter.BookID, chapter.VolumeNo, chapter.ChapterID, chapter.Title)
 		return fmt.Errorf("数据库连接未初始化")
 	}
+
 	chapter.CreateTime = time.Now()
 	chapter.UpdateTime = time.Now()
 
 	if err := DB.Create(chapter).Error; err != nil {
-		logger.Errorf("添加章节失败[书籍ID: %d, 章节ID: %d, 标题: %s]: %v",
-			chapter.BookID, chapter.ChapterID, chapter.Title, err)
+		logger.Errorf("添加章节失败[书籍ID: %d, 卷ID: %d, 章节ID: %d, 标题: %s]: %v",
+			chapter.BookID, chapter.VolumeNo, chapter.ChapterID, chapter.Title, err)
 		return err
 	}
 
-	contentPath := fmt.Sprintf("%s/%d/chap_%05d.txt", BooksDir, chapter.BookID, chapter.ChapterID)
+	contentPath := fmt.Sprintf("%s/%d/chap_%03d_%05d.txt", BooksDir, chapter.BookID, chapter.VolumeNo, chapter.ChapterID)
 	if err := os.WriteFile(contentPath, []byte(content), 0644); err != nil {
-		logger.Errorf("保存章节内容失败[路径: %s]: %v", contentPath, err)
+		logger.Errorf("保存章节内容失败[路径: %s, 书籍ID: %d, 卷序号: %d, 章节ID: %d]: %v", contentPath, chapter.BookID, chapter.VolumeNo, chapter.ChapterID, err)
 		// 回滚：按业务字段删除（避免依赖刚插入的 ID）
 		if err2 := DB.Where("book_id = ? AND chapter_id = ?", chapter.BookID, chapter.ChapterID).Delete(&model.Chapter{}).Error; err2 != nil {
 			logger.Errorf("回滚章节添加失败[书籍ID: %d, 章节ID: %d]: %v", chapter.BookID, chapter.ChapterID, err2)
@@ -287,30 +462,29 @@ func (s *BookService) AddChapter(chapter *model.Chapter, content string) error {
 		return err
 	}
 
-	logger.Infof("添加章节成功[书籍ID: %d, 章节ID: %d, 标题: %s]",
-		chapter.BookID, chapter.ChapterID, chapter.Title) // ✅ 不打 ID
+	logger.Infof("添加章节成功[书籍ID: %d, 卷序号: %d, 章节ID: %d, 标题: %s]", chapter.BookID, chapter.VolumeNo, chapter.ChapterID, chapter.Title) // ✅ 不打 ID
 	return nil
 }
 
 // GetChapterContent 获取章节内容
-func (s *BookService) GetChapterContent(bookID, chapterID uint) (string, error) {
+func (s *BookService) GetChapterContent(bookID, volumeNo, chapterID uint) (string, error) {
 	var chapter model.Chapter
-	if err := DB.Where("book_id = ? AND chapter_id = ?", bookID, chapterID).First(&chapter).Error; err != nil {
+	if err := DB.Where("book_id = ? AND volume_no = ? AND chapter_id = ?", bookID, volumeNo, chapterID).First(&chapter).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return "", fmt.Errorf("章节不存在")
 		}
-		logger.Errorf("获取章节元数据失败[书籍ID: %d, 章节ID: %d]: %v", bookID, chapterID, err)
+		logger.Errorf("获取章节元数据失败[书籍ID: %d, 卷序号: %d, 章节ID: %d]: %v", bookID, volumeNo, chapterID, err)
 		return "", err
 	}
 
-	contentPath := fmt.Sprintf("%s/%d/chap_%05d.txt", BooksDir, bookID, chapterID)
+	contentPath := fmt.Sprintf("%s/%d/chap_%03d_%05d.txt", BooksDir, bookID, volumeNo, chapterID)
 	contentBytes, err := os.ReadFile(contentPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			logger.Warnf("章节内容文件不存在[路径: %s]", contentPath)
+			logger.Warnf("章节内容文件不存在[路径: %s, 书籍ID: %d, 卷序号: %d, 章节ID: %d]", contentPath, bookID, volumeNo, chapterID)
 			return "", nil
 		}
-		logger.Errorf("读取章节内容失败[路径: %s]: %v", contentPath, err)
+		logger.Errorf("读取章节内容失败[路径: %s, 书籍ID: %d, 卷序号: %d, 章节ID: %d]: %v", contentPath, bookID, volumeNo, chapterID, err)
 		return "", err
 	}
 	return string(contentBytes), nil
@@ -330,11 +504,11 @@ func (s *BookService) UpdateChapter(chapter *model.Chapter, content string) erro
 
 	// 先查出数据库中的完整记录（含 ID）
 	var dbChapter model.Chapter
-	if err := DB.Where("book_id = ? AND chapter_id = ?", chapter.BookID, chapter.ChapterID).First(&dbChapter).Error; err != nil {
+	if err := DB.Where("book_id = ? AND volume_no = ? AND chapter_id = ?", chapter.BookID, chapter.VolumeNo, chapter.ChapterID).First(&dbChapter).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("章节不存在")
 		}
-		logger.Errorf("查询章节失败[书籍ID: %d, 章节ID: %d]: %v", chapter.BookID, chapter.ChapterID, err)
+		logger.Errorf("查询章节失败[书籍ID: %d, 卷号： %d, 章节ID: %d]: %v", chapter.BookID, chapter.VolumeNo, chapter.ChapterID, err)
 		return err
 	}
 
@@ -350,9 +524,9 @@ func (s *BookService) UpdateChapter(chapter *model.Chapter, content string) erro
 		}
 
 		if content != "" {
-			contentPath := fmt.Sprintf("%s/%d/chap_%05d.txt", BooksDir, chapter.BookID, chapter.ChapterID)
+			contentPath := fmt.Sprintf("%s/%d/chap_%03d_%05d.txt", BooksDir, chapter.BookID, chapter.VolumeNo, chapter.ChapterID)
 			if err := os.WriteFile(contentPath, []byte(content), 0644); err != nil {
-				logger.Errorf("更新章节内容失败[路径: %s]: %v", contentPath, err)
+				logger.Errorf("更新章节内容失败[路径: %s, 书籍ID: %d, 章节ID: %d]: %v", contentPath, chapter.BookID, chapter.ChapterID, err)
 				return err
 			}
 		}
@@ -364,40 +538,38 @@ func (s *BookService) UpdateChapter(chapter *model.Chapter, content string) erro
 }
 
 // DeleteChapter 删除章节
-func (s *BookService) DeleteChapter(book_id, chapter_id uint) error {
+func (s *BookService) DeleteChapter(bookID, volumeNo, chapterID uint) error {
 	if DB == nil {
-		logger.Errorf("删除章节失败[书籍ID: %d, 章节ID: %d]: 数据库连接未初始化", book_id, chapter_id)
+		logger.Errorf("删除章节失败[书籍ID: %d, 卷序号: %d, 章节ID: %d]: 数据库连接未初始化", bookID, volumeNo, chapterID)
 		return fmt.Errorf("数据库连接未初始化")
 	}
 
 	// 先查一下是否存在（可选，也可直接删）
 	var chapter model.Chapter
-	if err := DB.Where("book_id = ? AND chapter_id = ?", book_id, chapter_id).First(&chapter).Error; err != nil {
+	if err := DB.Where("book_id = ? AND volume_no = ? AND chapter_id = ?", bookID, volumeNo, chapterID).First(&chapter).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("章节不存在")
 		}
-		logger.Errorf("查询章节失败[书籍ID: %d, 章节ID: %d]: %v", book_id, chapter_id, err)
+		logger.Errorf("查询章节失败[书籍ID: %d, 卷ID: %d, 章节ID: %d]: %v", bookID, volumeNo, chapterID, err)
 		return err
 	}
 
 	return DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("book_id = ? AND chapter_id = ?", book_id, chapter_id).Delete(&model.Chapter{}).Error; err != nil {
-			logger.Errorf("删除章节失败[书籍ID: %d, 章节ID: %d]: %v", book_id, chapter_id, err)
+		if err := tx.Where("book_id = ? AND volume_no = ? AND chapter_id = ?", bookID, volumeNo, chapterID).Delete(&model.Chapter{}).Error; err != nil {
+			logger.Errorf("删除章节失败[书籍ID: %d, 卷ID: %d, 章节ID: %d]: %v", bookID, volumeNo, chapterID, err)
 			return err
 		}
 
-		contentPath := fmt.Sprintf("%s/%d/chap_%05d.txt", BooksDir, book_id, chapter_id)
+		contentPath := fmt.Sprintf("%s/%d/chap_%03d_%05d.txt", BooksDir, bookID, volumeNo, chapterID)
 		if err := os.Remove(contentPath); err != nil && !os.IsNotExist(err) {
-			logger.Warnf("删除章节内容文件失败[路径: %s]: %v", contentPath, err)
+			logger.Warnf("删除章节内容文件失败[路径: %s, 书籍ID: %d, 卷ID: %d, 章节ID: %d]: %v", contentPath, bookID, volumeNo, chapterID, err)
 		}
 
-		logger.Infof("删除章节成功[书籍ID: %d, 章节ID: %d, 标题: %s]",
-			book_id, chapter_id, chapter.Title) // ✅ 只用业务ID
+		logger.Infof("删除章节成功[书籍ID: %d, 卷ID: %d, 章节ID: %d, 标题: %s]",
+			bookID, volumeNo, chapterID, chapter.Title) // ✅ 只用业务ID
 		return nil
 	})
 }
-
-
 
 // 排行榜服务
 // 获取指定类型的排行榜

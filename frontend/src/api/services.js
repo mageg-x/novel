@@ -11,7 +11,7 @@ export const categoryAPI = {
    getAll: (page = 1, limit = 20) =>api.get(`/books?page=${page}&limit=${limit}`),
    getById: (id) => api.get(`/books/${id}`),
    getChapters: (bookId) => api.get(`/books/${bookId}/chapters`),
-   getChapter: (bookId, chapterId) =>api.get(`/books/${bookId}/chapters/${chapterId}`),
+   getChapter: (bookId, volumeNo, chapterId) =>api.get(`/books/${bookId}/chapters/${volumeNo}/${chapterId}`),
    getRelatedBooks: (bookId) => api.get(`/books/${bookId}/related`),
    getComments: (bookId) => api.get(`/books/${bookId}/comments`),
    search: (query, page = 1, limit = 20) => api.get(`/books/search?keyword=${query}&page=${page}&limit=${limit}`),
@@ -22,9 +22,9 @@ export const categoryAPI = {
 
 // 章节API
 export const chapterAPI = {
-  addChapter: (bookId, chapterId, data) =>api.post(`/books/${bookId}/chapters/${chapterId}`, data),
-  updateChapter: (bookId, chapterId, data) =>api.put(`/books/${bookId}/chapters/${chapterId}`, data),
-  deleteChapter: (bookId, chapterId) =>api.delete(`/books/${bookId}/chapters/${chapterId}`),
+  addChapter: (bookId, volumeNo, chapterId, data) =>api.post(`/books/${bookId}/chapters/${volumeNo}/${chapterId}`, data),
+  updateChapter: (bookId, volumeNo, chapterId, data) =>api.put(`/books/${bookId}/chapters/${volumeNo}/${chapterId}`, data),
+  deleteChapter: (bookId, volumeNo, chapterId) =>api.delete(`/books/${bookId}/chapters/${volumeNo}/${chapterId}`),
 };
 
 // 排行榜API
@@ -92,8 +92,8 @@ export const authorAPI = {
   updateBook: (bookId, data) => api.put(`/author/books/${bookId}`, data),
   deleteBook: (bookId) => api.delete(`/author/books/${bookId}`),
   addChapter: (bookId, data) =>api.post(`/author/books/${bookId}/chapters`, data),
-  updateChapter: (bookId, chapterId, data) =>api.put(`/author/books/${bookId}/chapters/${chapterId}`, data),
-  deleteChapter: (bookId, chapterId) =>api.delete(`/author/books/${bookId}/chapters/${chapterId}`),
+  updateChapter: (bookId, volumeNo, chapterId, data) =>api.put(`/author/books/${bookId}/chapters/${volumeNo}/${chapterId}`, data),
+  deleteChapter: (bookId, volumeNo, chapterId) =>api.delete(`/author/books/${bookId}/chapters/${volumeNo}/${chapterId}`),
 };
 
 // 书架API

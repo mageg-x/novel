@@ -88,7 +88,7 @@
         </div>
 
         <!-- 底部导航 -->
-        <ToolBar :activeTab="activeTab" @tab-change="handleTabChange" />
+        <!-- <ToolBar :activeTab="activeTab" @tab-change="handleTabChange" /> -->
     </div>
     <!-- 大屏 -->
     <div class="hidden md:block container md:w-5xl  mx-auto ">

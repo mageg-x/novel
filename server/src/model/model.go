@@ -22,7 +22,7 @@ type Book struct {
 	Title              string    `gorm:"column:title;type:text;not null" json:"title"`
 	Author             string    `gorm:"column:author;type:text;not null" json:"author"`
 	Cover              string    `gorm:"column:cover;type:text" json:"cover"`
-	Category           string    `gorm:"column:category;type:text;not null" json:"category"`
+	Category           string    `gorm:"column:category;type:text;not null;index:idx_books_category" json:"category"`
 	Channel            string    `gorm:"column:channel;type:text;not null;default:male" json:"channel"` // male/female
 	Description        string    `gorm:"column:description;type:text" json:"description"`
 	Status             string    `gorm:"column:status;type:text;not null;default:serializing" json:"status"` // serializing/completed
@@ -32,20 +32,32 @@ type Book struct {
 	LatestChapterID    *uint     `gorm:"column:latest_chapter_id;type:integer" json:"latestChapterId"` // 可为 NULL
 	LatestChapterTitle string    `gorm:"column:latest_chapter_title;type:text" json:"latestChapterTitle"`
 	CreateTime         time.Time `gorm:"column:create_time;autoCreateTime" json:"createTime"`
-	UpdateTime         time.Time `gorm:"column:update_time;autoUpdateTime" json:"updateTime"`
+	UpdateTime         time.Time `gorm:"column:update_time;autoUpdateTime;index:idx_books_update_time" json:"updateTime"`
+	Volumes            []Volume  `gorm:"foreignKey:BookID;references:ID" json:"volumes,omitempty"`
 	Chapters           []Chapter `gorm:"foreignKey:BookID;references:ID" json:"chapters,omitempty"`
 }
 
+// Volume 对应表: volumes
+type Volume struct {
+	ID       uint   `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	BookID   uint   `gorm:"column:book_id;not null;uniqueIndex:idx_book_volume" json:"bookId"`
+	VolumeNo uint   `gorm:"column:volume_no;not null;uniqueIndex:idx_book_volume" json:"volumeNo"` // 卷序号：1,2,3...
+	Title    string `gorm:"column:title;type:text;not null" json:"title"`
+}
+
+// Chapter 对应表: chapters
 // Chapter 对应表: chapters
 type Chapter struct {
-	ID         uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"` // 数据库主键（自增）
-	BookID     uint      `gorm:"column:book_id;not null;uniqueIndex:idx_book_chapter" json:"bookId"`
-	ChapterID  uint      `gorm:"column:chapter_id;not null;uniqueIndex:idx_book_chapter" json:"chapterId"` // 章节序号：1,2,3...
+	ID         uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	BookID     uint      `gorm:"column:book_id;not null;uniqueIndex:uk_book_volume_chapter" json:"bookId"`
+	VolumeNo   uint      `gorm:"column:volume_no;not null;default:0;uniqueIndex:uk_book_volume_chapter" json:"volumeNo"` // 0 表示无卷
+	ChapterID  uint      `gorm:"column:chapter_id;not null;uniqueIndex:uk_book_volume_chapter" json:"chapterId"`
 	Title      string    `gorm:"column:title;type:text;not null" json:"title"`
 	Content    string    `gorm:"-" json:"content"`
 	IsVip      bool      `gorm:"column:is_vip;not null;default:false" json:"isVip"`
 	CreateTime time.Time `gorm:"column:create_time;autoCreateTime" json:"createTime"`
 	UpdateTime time.Time `gorm:"column:update_time;autoUpdateTime" json:"updateTime"`
+	Volume     *Volume   `gorm:"-" json:"volume,omitempty"`
 }
 
 // User 对应表: users

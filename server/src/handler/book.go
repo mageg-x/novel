@@ -401,11 +401,18 @@ func GetChapterByID(c *gin.Context) {
 		return
 	}
 	bookIDStr := c.Param("book_id")
+	volumeNoStr := c.Param("volume_no")
 	chapterIDStr := c.Param("chapter_id")
 
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		return
+	}
+
+	volumeNo, err := strconv.ParseUint(volumeNoStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的卷序号"})
 		return
 	}
 
@@ -415,7 +422,7 @@ func GetChapterByID(c *gin.Context) {
 		return
 	}
 
-	chapter, err := bs.GetChapterByID(uint(bookID), uint(chapterID))
+	chapter, err := bs.GetChapterByID(uint(bookID), uint(volumeNo), uint(chapterID))
 	if err != nil {
 		logger.Errorf("获取章节详情失败: %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "章节不存在"})
@@ -511,11 +518,18 @@ func UpdateChapter(c *gin.Context) {
 		return
 	}
 	bookIDStr := c.Param("book_id")
+	volumeNoStr := c.Param("volume_no")
 	chapterIDStr := c.Param("chapter_id")
 
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		return
+	}
+
+	volumeNo, err := strconv.ParseUint(volumeNoStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的卷序号"})
 		return
 	}
 
@@ -526,7 +540,7 @@ func UpdateChapter(c *gin.Context) {
 	}
 
 	// 获取现有章节
-	chapter, err := bs.GetChapterByID(uint(bookID), uint(chapterID))
+	chapter, err := bs.GetChapterByID(uint(bookID), uint(volumeNo), uint(chapterID))
 	if err != nil {
 		logger.Errorf("获取章节详情失败: %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "章节不存在"})
@@ -573,11 +587,18 @@ func DeleteChapter(c *gin.Context) {
 		return
 	}
 	bookIDStr := c.Param("book_id")
+	volumeNoStr := c.Param("volume_no")
 	chapterIDStr := c.Param("chapter_id")
 
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		return
+	}
+
+	volumeNo, err := strconv.ParseUint(volumeNoStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的卷序号"})
 		return
 	}
 
@@ -588,7 +609,7 @@ func DeleteChapter(c *gin.Context) {
 	}
 
 	// 获取章节信息，验证是否属于指定书籍
-	chapter, err := bs.GetChapterByID(uint(bookID), uint(chapterID))
+	chapter, err := bs.GetChapterByID(uint(bookID), uint(volumeNo), uint(chapterID))
 	if err != nil {
 		logger.Errorf("获取章节详情失败: %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "章节不存在"})
@@ -601,7 +622,7 @@ func DeleteChapter(c *gin.Context) {
 		return
 	}
 
-	if err := bs.DeleteChapter(uint(bookID), uint(chapterID)); err != nil {
+	if err := bs.DeleteChapter(uint(bookID), uint(volumeNo), uint(chapterID)); err != nil {
 		logger.Errorf("删除章节失败: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除章节失败"})
 		return

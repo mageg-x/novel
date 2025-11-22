@@ -82,7 +82,7 @@
         </div>
 
         <!-- 底部导航 -->
-        <ToolBar :showControls="true" />
+        <!-- <ToolBar :showControls="true" /> -->
 
     </div>
     <!-- 大屏 -->

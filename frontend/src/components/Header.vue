@@ -20,7 +20,7 @@
                 <span class="text-xl font-bold text-primary">阁林小说</span>
             </router-link>
 
-            <div class="min-w-80 hidden md:block">
+            <div v-if="showSearchBar" class="min-w-80 hidden md:block">
                 <div class="flex items-center flex-1 max-w-md mx-auto">
                     <!-- 搜索框 -->
                     <searchBar.reuse />
@@ -75,7 +75,7 @@
         </div>
 
         <!-- 小屏幕第二行：搜索框，独占一行 -->
-        <div class="container mx-auto px-4 pb-4 md:hidden">
+        <div v-if="showSearchBar" class="container mx-auto px-4 pb-4 md:hidden">
             <searchBar.reuse />
         </div>
 
@@ -84,24 +84,19 @@
             <div class="container mx-auto  w-5xl">
                 <ul class="flex space-x-1 md:space-x-6 py-2 overflow-x-auto">
                     <li>
-                        <router-link to="/"
-                            class="px-9 py-1 rounded hover:bg-secondary transition-colors">首页</router-link>
+                        <router-link to="/" replace active-class="bg-secondary" exact class="px-9 py-1 rounded hover:bg-secondary transition-colors">首页</router-link>
                     </li>
                     <li>
-                        <router-link to="/class"
-                            class="px-9 py-1 rounded hover:bg-secondary transition-colors">全部作品</router-link>
+                        <router-link to="/class" replace active-class="bg-secondary" class="px-9 py-1 rounded hover:bg-secondary transition-colors">全部作品</router-link>
                     </li>
                     <li>
-                        <router-link to="/rank"
-                            class="px-9 py-1 rounded hover:bg-secondary transition-colors">排行榜</router-link>
+                        <router-link to="/rank" replace active-class="bg-secondary" class="px-9 py-1 rounded hover:bg-secondary transition-colors">排行榜</router-link>
                     </li>
                     <li>
-                        <router-link to="/author"
-                            class="px-9 py-1 rounded hover:bg-secondary transition-colors">作家专区</router-link>
+                        <router-link to="/author" replace active-class="bg-secondary" class="px-9 py-1 rounded hover:bg-secondary transition-colors">作家专区</router-link>
                     </li>
                     <li v-if="isLoggedIn && isAdmin">
-                        <router-link to="/admin"
-                            class="px-9 py-1 rounded hover:bg-secondary transition-colors">后台管理</router-link>
+                        <router-link to="/admin" replace active-class="bg-secondary" class="px-9 py-1 rounded hover:bg-secondary transition-colors">后台管理</router-link>
                     </li>
                 </ul>
             </div>
@@ -114,6 +109,14 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createReusableTemplate } from '@vueuse/core'
 import { useUserStore } from '@/stores/user'
+
+// 定义组件属性
+const props = defineProps({
+    showSearchBar: {
+        type: Boolean,
+        default: true
+    }
+})
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -129,7 +132,7 @@ const isAdmin = userStore.isAdmin
 // 搜索处理函数（可后续对接路由或 API）
 const handleSearch = () => {
     console.log('搜索关键词:', searchQuery.value)
-    // 例如：router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
+    router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
 }
 
 // 跳转到登录页面

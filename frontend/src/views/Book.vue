@@ -117,7 +117,7 @@
         </div>
 
         <!-- 底部导航栏 -->
-        <ToolBar :showControls="showControls" />
+        <!-- <ToolBar :showControls="showControls" /> -->
     </div>
 
     <!-- 大屏 -->
