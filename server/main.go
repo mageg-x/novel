@@ -91,6 +91,7 @@ func main() {
 		logger.Fatal("搜索服务初始化失败")
 		return
 	}
+
 	// 初始化搜索服务
 	if err := service.SService.InitSearch(); err != nil {
 		logger.Fatalf("搜索服务初始化失败: %v", err)
