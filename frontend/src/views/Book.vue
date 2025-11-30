@@ -80,16 +80,7 @@
                                 'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">
                     拼音
                 </button>
-                <button @click="toggleFishMode"
-                    class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
-                    :class="[userMode.value === 'fish' ? (currentTheme === 'night' ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border border-blue-500' :
-                        currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white border border-blue-400' :
-                            'bg-gradient-to-r from-blue-500 to-cyan-500 text-white border border-blue-400') :
-                        currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
-                                'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">
-                    <i class="fas fa-fish mr-1"></i>摸鱼
-                </button>
+
                 <button @click="showPinyin = !showPinyin"
                     class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
                     :class="[showPinyin ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
@@ -143,7 +134,7 @@
     </div>
 
     <!-- 大屏 -->
-    <div v-if="userMode == 'working' || userMode == 'fish'" class="w-full hidden md:block" :class="userMode == 'fish' ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-400' : ''">
+    <div v-if="userMode == 'fish'" class="w-full hidden md:block" :class="userMode == 'fish' ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-400' : ''">
         <WordHeader @exit="switchMode" @close="switchMode" />
         <div class="mx-auto w-5xl pt-30  ">
             <!-- 章节标题 -->
@@ -247,7 +238,7 @@
                         :class="currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white' :
                             currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-400 to-green-500 text-white' :
                                 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500'"
-                        @click="toggleFishMode">
+                        @click="toFishMode">
                         <i class="fas fa-fish text-lg"></i>
                     </button>
                 </div>
@@ -332,17 +323,12 @@ const scrollThreshold = 50
 const fontSize = ref('medium') // 'small', 'medium', 'large'
 const fontType = ref('default') // 'default', 'handwriting'
 const showPinyin = ref(false)
-const userMode = ref('working')
+const userMode = ref('normal')
 
 // 切换摸鱼模式
-const toggleFishMode = () => {
-    userMode.value = userMode.value === 'fish' ? 'working' : 'fish'
-    // 摸鱼模式时隐藏footer
-    if (userMode.value === 'fish') {
-        uiStore.hideFooter()
-    } else {
-        uiStore.displayFooter()
-    }
+const toFishMode = () => {
+    userMode.value = 'fish'
+    uiStore.hideFooter()
 }
 
 // 数据
@@ -498,12 +484,7 @@ const handleScroll = throttle(() => {
 }, 100);
 
 function switchMode () { 
-    // 如果当前是摸鱼模式，切换回正常模式；否则在工作模式和正常模式之间切换
-    if (userMode.value === 'fish') {
-        userMode.value = 'normal'
-    } else {
-        userMode.value = userMode.value === 'working' ? 'normal' : 'working'
-    }
+    userMode.value = userMode.value === 'fish' ? 'normal' : 'fish'
     
     if (userMode.value === 'normal') {
         // 显示 footer
@@ -516,6 +497,13 @@ function switchMode () {
 
 // 生命周期
 onMounted(() => {
+    if (userMode.value === 'normal') {
+        // 显示 footer
+        uiStore.displayFooter()
+    } else {
+        // 隐藏 footer（工作模式和摸鱼模式都隐藏footer）
+        uiStore.hideFooter()
+    }    
     fetchChapterContent()
     window.addEventListener('scroll', handleScroll)
 })
