@@ -14,7 +14,11 @@ func AuthMiddleware() gin.HandlerFunc {
 		// 获取Authorization头
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "未提供认证令牌"})
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
+				"message": "Authentication token not provided",
+				"data":    nil,
+			})
 			c.Abort()
 			return
 		}
@@ -22,7 +26,11 @@ func AuthMiddleware() gin.HandlerFunc {
 		// 检查Authorization头格式
 		parts := strings.SplitN(authHeader, " ", 2)
 		if !(len(parts) == 2 && parts[0] == "Bearer") {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "认证令牌格式错误"})
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
+				"message": "Invalid authentication token format",
+				"data":    nil,
+			})
 			c.Abort()
 			return
 		}
@@ -30,7 +38,11 @@ func AuthMiddleware() gin.HandlerFunc {
 		// 解析JWT令牌
 		claims, err := util.ParseToken(parts[1])
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "无效的认证令牌"})
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
+				"message": "Invalid authentication token",
+				"data":    nil,
+			})
 			c.Abort()
 			return
 		}
@@ -52,14 +64,22 @@ func AuthorMiddleware() gin.HandlerFunc {
 		// 获取用户类型
 		userType, exists := c.Get("userType")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "未提供用户类型"})
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
+				"message": "User type not provided",
+				"data":    nil,
+			})
 			c.Abort()
 			return
 		}
 
 		// 检查用户是否为作者
 		if userType != "author" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "需要作者身份"})
+			c.JSON(http.StatusForbidden, gin.H{
+				"code":    http.StatusForbidden,
+				"message": "Author role required",
+				"data":    nil,
+			})
 			c.Abort()
 			return
 		}
@@ -74,14 +94,22 @@ func AdminMiddleware() gin.HandlerFunc {
 		// 获取用户类型
 		userType, exists := c.Get("userType")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "未提供用户类型"})
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
+				"message": "User type not provided",
+				"data":    nil,
+			})
 			c.Abort()
 			return
 		}
 
 		// 检查用户是否为管理员
 		if userType != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "需要管理员身份"})
+			c.JSON(http.StatusForbidden, gin.H{
+				"code":    http.StatusForbidden,
+				"message": "Admin role required",
+				"data":    nil,
+			})
 			c.Abort()
 			return
 		}

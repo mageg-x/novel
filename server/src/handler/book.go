@@ -27,26 +27,38 @@ type BookQueryParams struct {
 func GetAllBooks(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 
 	var params BookQueryParams
 	if err := c.ShouldBindQuery(&params); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
 	books, total, err := bs.GetAllBooks(params.Offset, params.Limit)
 	if err != nil {
-		logger.Errorf("获取书籍列表失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取书籍列表失败"})
+		logger.Errorf("Failed to get book list: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get book list",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data": gin.H{
 			"books": books,
 			"total": total,
@@ -58,26 +70,38 @@ func GetAllBooks(c *gin.Context) {
 func GetBookByID(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	idStr := c.Param("book_id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	book, err := bs.GetBookByID(uint(id))
 	if err != nil {
-		logger.Errorf("获取书籍详情失败: %v", err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "书籍不存在"})
+		logger.Errorf("Failed to get book details: %v", err)
+		c.JSON(http.StatusNotFound, gin.H{
+			"code":    http.StatusNotFound,
+			"message": "Book not found",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data":    book,
 	})
 }
@@ -86,27 +110,39 @@ func GetBookByID(c *gin.Context) {
 func GetBooksByCategory(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	category := c.Param("category")
 
 	var params BookQueryParams
 	if err := c.ShouldBindQuery(&params); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
 	books, total, err := bs.GetBooksByCategory(category, params.Offset, params.Limit)
 	if err != nil {
-		logger.Errorf("根据分类获取书籍失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取书籍列表失败"})
+		logger.Errorf("Failed to get books by category: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get book list",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data": gin.H{
 			"books": books,
 			"total": total,
@@ -124,29 +160,41 @@ type BookSearchParams struct {
 func SearchBooks(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		logger.Errorf("BookService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		logger.Errorf("BookService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 
 	var params BookSearchParams
 	if err := c.ShouldBindQuery(&params); err != nil {
-		logger.Errorf("参数错误: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		logger.Errorf("Invalid parameters: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
 	offset := (params.Page - 1) * params.PageSize
 	books, total, err := ss.SearchBooks(params.Keyword, params.PageSize, offset)
 	if err != nil {
-		logger.Errorf("搜索书籍失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索书籍失败"})
+		logger.Errorf("Failed to search books: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to search books",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data": gin.H{
 			"books": books,
 			"total": total,
@@ -168,12 +216,20 @@ type BookCreateRequest struct {
 func AddBook(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	var req BookCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
@@ -188,14 +244,18 @@ func AddBook(c *gin.Context) {
 	}
 
 	if err := bs.AddBook(book); err != nil {
-		logger.Errorf("添加书籍失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "添加书籍失败"})
+		logger.Errorf("Failed to add book: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to add book",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "添加书籍成功",
+		"code":    http.StatusOK,
+		"message": "Successfully added book",
 		"data":    book,
 	})
 }
@@ -214,27 +274,43 @@ type BookUpdateRequest struct {
 func UpdateBook(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	idStr := c.Param("book_id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	// 获取现有书籍
 	book, err := bs.GetBookByID(uint(id))
 	if err != nil {
-		logger.Errorf("获取书籍详情失败: %v", err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "书籍不存在"})
+		logger.Errorf("Failed to get book details: %v", err)
+		c.JSON(http.StatusNotFound, gin.H{
+			"code":    http.StatusNotFound,
+			"message": "Book not found",
+			"data":    nil,
+		})
 		return
 	}
 
 	var req BookUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
@@ -262,14 +338,18 @@ func UpdateBook(c *gin.Context) {
 	}
 
 	if err := bs.UpdateBook(book); err != nil {
-		logger.Errorf("更新书籍失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新书籍失败"})
+		logger.Errorf("Failed to update book: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to update book",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "更新书籍成功",
+		"code":    http.StatusOK,
+		"message": "Successfully updated book",
 		"data":    book,
 	})
 }
@@ -278,25 +358,38 @@ func UpdateBook(c *gin.Context) {
 func DeleteBook(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	idStr := c.Param("book_id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	if err := bs.DeleteBook(uint(id)); err != nil {
-		logger.Errorf("删除书籍失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除书籍失败"})
+		logger.Errorf("Failed to delete book: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to delete book",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "删除书籍成功",
+		"code":    http.StatusOK,
+		"message": "Successfully deleted book",
+		"data":    nil,
 	})
 }
 
@@ -304,26 +397,38 @@ func DeleteBook(c *gin.Context) {
 func GetBookChapters(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	bookIDStr := c.Param("book_id")
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	chapters, err := bs.GetChaptersByBookID(uint(bookID))
 	if err != nil {
-		logger.Errorf("获取章节列表失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取章节列表失败"})
+		logger.Errorf("Failed to get chapter list: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get chapter list",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "Successfully retrieved chapter list",
 		"data":    chapters,
 	})
 }
@@ -332,27 +437,39 @@ func GetBookChapters(c *gin.Context) {
 func GetRelatedBooks(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	bookIDStr := c.Param("book_id")
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	// 获取相关书籍，默认返回4本
 	relatedBooks, err := bs.GetRelatedBooks(uint(bookID), 4)
 	if err != nil {
-		logger.Errorf("获取相关书籍失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取相关书籍失败"})
+		logger.Errorf("Failed to get related books: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get related books",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "Successfully retrieved related books",
 		"data":    relatedBooks,
 	})
 }
@@ -361,16 +478,22 @@ func GetRelatedBooks(c *gin.Context) {
 func GetBookComments(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	// 获取书籍ID
 	bookIDStr := c.Param("book_id")
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
-		logger.Errorf("书籍ID解析失败: %v", err)
+		logger.Errorf("Failed to parse book ID: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "无效的书籍ID",
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
 		})
 		return
 	}
@@ -378,66 +501,71 @@ func GetBookComments(c *gin.Context) {
 	// 调用服务层获取评论列表
 	comments, err := bs.GetCommentsByBookID(uint(bookID))
 	if err != nil {
-		logger.Errorf("获取书籍评论失败[书籍ID: %d]: %v", bookID, err)
+		logger.Errorf("Failed to get book comments [BookID: %d]: %v", bookID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "获取书籍评论失败",
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get book comments",
+			"data":    nil,
 		})
 		return
 	}
 
 	// 返回结果
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "Successfully retrieved comments",
 		"data":    comments,
 	})
 }
 
 // 根据ID获取章节
-func GetChapterByID(c *gin.Context) {
+func GetChapterByNo(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	bookIDStr := c.Param("book_id")
-	volumeNoStr := c.Param("volume_no")
-	chapterIDStr := c.Param("chapter_id")
+	chapterNoStr := c.Param("chapter_no")
 
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
-	volumeNo, err := strconv.ParseUint(volumeNoStr, 10, 32)
+	chapterNo, err := strconv.ParseUint(chapterNoStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的卷序号"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid chapter ID",
+			"data":    nil,
+		})
 		return
 	}
 
-	chapterID, err := strconv.ParseUint(chapterIDStr, 10, 32)
+	chapter, err := bs.GetChapterByNo(uint(bookID), uint(chapterNo))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的章节ID"})
-		return
-	}
-
-	chapter, err := bs.GetChapterByID(uint(bookID), uint(volumeNo), uint(chapterID))
-	if err != nil {
-		logger.Errorf("获取章节详情失败: %v", err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "章节不存在"})
-		return
-	}
-
-	// 验证章节是否属于指定书籍
-	if chapter.BookID != uint(bookID) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "章节不属于指定书籍"})
+		logger.Errorf("Failed to get chapter details: %v", err)
+		c.JSON(http.StatusNotFound, gin.H{
+			"code":    http.StatusNotFound,
+			"message": "Chapter not found",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "Successfully retrieved chapter",
 		"data":    chapter,
 	})
 }
@@ -460,47 +588,54 @@ type ChapterContentResponse struct {
 func AddChapter(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	bookIDStr := c.Param("book_id")
-	chapterIDStr := c.Param("chapter_id")
 
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
-		return
-	}
-
-	chapterID, err := strconv.ParseUint(chapterIDStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的章节ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	var req ChapterCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
-	chapter := &model.Chapter{
-		ChapterID: uint(chapterID),
-		BookID:    uint(bookID),
-		Title:     req.Title,
-		IsVip:     req.IsVip,
-	}
-
-	if err := bs.AddChapter(chapter, req.Content); err != nil {
-		logger.Errorf("添加章节失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "添加章节失败"})
+	if err := bs.AddChapter(uint(bookID), req.Title, req.Content, req.IsVip); err != nil {
+		logger.Errorf("Failed to add chapter: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to add chapter",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "添加章节成功",
-		"data":    chapter,
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data": gin.H{
+			"book_id": bookID,
+			"title":   req.Title,
+			"content": req.Content,
+			"is_vip":  req.IsVip,
+		},
 	})
 }
 
@@ -514,68 +649,66 @@ type ChapterUpdateRequest struct {
 func UpdateChapter(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	bookIDStr := c.Param("book_id")
-	volumeNoStr := c.Param("volume_no")
-	chapterIDStr := c.Param("chapter_id")
+	chapterNoStr := c.Param("chapter_no")
 
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
-	volumeNo, err := strconv.ParseUint(volumeNoStr, 10, 32)
+	chapterNo, err := strconv.ParseUint(chapterNoStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的卷序号"})
-		return
-	}
-
-	chapterID, err := strconv.ParseUint(chapterIDStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的章节ID"})
-		return
-	}
-
-	// 获取现有章节
-	chapter, err := bs.GetChapterByID(uint(bookID), uint(volumeNo), uint(chapterID))
-	if err != nil {
-		logger.Errorf("获取章节详情失败: %v", err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "章节不存在"})
-		return
-	}
-
-	// 验证章节是否属于指定书籍
-	if chapter.BookID != uint(bookID) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "章节不属于指定书籍"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid chapter ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	var req ChapterUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
-	// 更新字段
-	if req.Title != "" {
-		chapter.Title = req.Title
-	}
-
-	chapter.IsVip = req.IsVip
-
-	if err := bs.UpdateChapter(chapter, req.Content); err != nil {
-		logger.Errorf("更新章节失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新章节失败"})
+	if err := bs.UpdateChapter(uint(bookID), uint(chapterNo), req.Title, req.Content, req.IsVip); err != nil {
+		logger.Errorf("Failed to update chapter: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to update chapter",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "更新章节成功",
-		"data":    chapter,
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data": gin.H{
+			"book_id":    bookID,
+			"chapter_no": chapterNo,
+			"title":      req.Title,
+			"content":    req.Content,
+			"is_vip":     req.IsVip,
+		},
 	})
 }
 
@@ -583,54 +716,50 @@ func UpdateChapter(c *gin.Context) {
 func DeleteChapter(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	bookIDStr := c.Param("book_id")
-	volumeNoStr := c.Param("volume_no")
-	chapterIDStr := c.Param("chapter_id")
+	chapterNoStr := c.Param("chapter_no")
 
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
-	volumeNo, err := strconv.ParseUint(volumeNoStr, 10, 32)
+	chapterNo, err := strconv.ParseUint(chapterNoStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的卷序号"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid chapter ID",
+			"data":    nil,
+		})
 		return
 	}
 
-	chapterID, err := strconv.ParseUint(chapterIDStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的章节ID"})
-		return
-	}
-
-	// 获取章节信息，验证是否属于指定书籍
-	chapter, err := bs.GetChapterByID(uint(bookID), uint(volumeNo), uint(chapterID))
-	if err != nil {
-		logger.Errorf("获取章节详情失败: %v", err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "章节不存在"})
-		return
-	}
-
-	// 验证章节是否属于指定书籍
-	if chapter.BookID != uint(bookID) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "章节不属于指定书籍"})
-		return
-	}
-
-	if err := bs.DeleteChapter(uint(bookID), uint(volumeNo), uint(chapterID)); err != nil {
-		logger.Errorf("删除章节失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除章节失败"})
+	if err := bs.DeleteChapter(uint(bookID), uint(chapterNo)); err != nil {
+		logger.Errorf("Failed to delete chapter: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to delete chapter",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "删除章节成功",
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data":    nil,
 	})
 }
 
@@ -638,7 +767,11 @@ func DeleteChapter(c *gin.Context) {
 func GetRcmds(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 
@@ -650,27 +783,35 @@ func GetRcmds(c *gin.Context) {
 	// 根据推荐类型调用不同的服务方法
 	switch rcmdType {
 	case "hot":
-		rcmds, err = bs.GetRcmdByType("hot", "热门推荐")
+		rcmds, err = bs.GetRcmdByType("hot", "Hot Recommendation")
 	case "top":
-		rcmds, err = bs.GetRcmdByType("top", "置顶推荐")
+		rcmds, err = bs.GetRcmdByType("top", "Top Recommendation")
 	case "curated":
-		rcmds, err = bs.GetRcmdByType("curated", "精选推荐")
+		rcmds, err = bs.GetRcmdByType("curated", "Curated Recommendation")
 	case "featured":
-		rcmds, err = bs.GetRcmdByType("featured", "特色推荐")
+		rcmds, err = bs.GetRcmdByType("featured", "Featured Recommendation")
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的推荐类型"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid recommendation type",
+			"data":    nil,
+		})
 		return
 	}
 
 	if err != nil {
-		logger.Errorf("获取%v推荐失败: %v", rcmdType, err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取推荐失败"})
+		logger.Errorf("Failed to get %v recommendation: %v", rcmdType, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get recommendation",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data":    rcmds,
 	})
 }
@@ -686,20 +827,32 @@ func AddRcmd(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
 	// 检查书籍是否存在
 	if _, err := bs.GetBookByID(req.BookID); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "书籍不存在"})
+		c.JSON(http.StatusNotFound, gin.H{
+			"code":    http.StatusNotFound,
+			"message": "Book not found",
+			"data":    nil,
+		})
 		return
 	}
 
 	// 检查是否已存在
 	var existingRcmd model.Rcmd
 	if err := service.DB.Where("rcmd_type = ? AND book_id = ?", rcmdType, req.BookID).First(&existingRcmd).Error; err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "该书籍已在推荐列表中"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Book already in recommendation list",
+			"data":    nil,
+		})
 		return
 	}
 
@@ -711,14 +864,18 @@ func AddRcmd(c *gin.Context) {
 	}
 
 	if err := service.DB.Create(&rcmd).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "添加推荐失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to add recommendation",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "添加推荐成功",
-		"data":    rcmd,
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data":    nil,
 	})
 }
 
@@ -729,19 +886,28 @@ func DeleteRcmd(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的推荐ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid recommendation ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	// 删除指定类型和ID的推荐条目
 	if err := service.DB.Where("rcmd_type = ? AND id = ?", rcmdType, id).Delete(&model.Rcmd{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除推荐失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to delete recommendation",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "删除推荐成功",
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data":    nil,
 	})
 }
 
@@ -752,7 +918,11 @@ func UpdateRcmds(c *gin.Context) {
 
 	var rcmds []model.Rcmd
 	if err := c.ShouldBindJSON(&rcmds); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
@@ -761,14 +931,19 @@ func UpdateRcmds(c *gin.Context) {
 	for _, rcmd := range rcmds {
 		if err := tx.Model(&model.Rcmd{}).Where("id = ? AND rcmd_type = ?", rcmd.ID, rcmdType).Update("order", rcmd.Order).Error; err != nil {
 			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "更新推荐顺序失败"})
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code":    http.StatusInternalServerError,
+				"message": "Failed to update recommendation order",
+				"data":    nil,
+			})
 			return
 		}
 	}
 
 	tx.Commit()
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "更新推荐顺序成功",
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data":    rcmds,
 	})
 }

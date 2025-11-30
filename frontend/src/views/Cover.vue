@@ -68,10 +68,10 @@
             </div>
 
             <div class="space-y-3">
-                <div class="border-l-2 border-[#469b75] pl-3 py-1" v-for="(chapter, index) in chapters.slice(0, 3)"
+                <div class="border-l-2 border-[#469b75] pl-3 py-1" v-for="(chapter, index) in chapters.slice(-3).reverse()"
                     :key="index">
-                    <router-link :to="`/book/${book.id}/${chapter.chapterId}`"
-                        class="text-sm text-gray-800 mb-1 font-medium cursor-pointer hover:text-[#469b75] transition-colors">{{
+                    <router-link :to="`/book/${book.id}/${chapter.chapterNo}`"
+                        class="text-sm text-gray-800 mb-1 font-medium cursor-pointer hover:text-[#469b75] transition-colors">第{{ chapter.chapterNo }}章 {{
                             chapter.title }}</router-link>
                 </div>
             </div>
@@ -161,12 +161,12 @@
 
                         <div class="space-y-3" v-for="(chapter, index) in chapters.slice(-3).reverse()" :key="index">
                             <div class="flex justify-between items-start">
-                                <router-link :to="`/book/${book.id}/${chapter.chapterId}`"
-                                    class="text-gray-800 hover:text-[#469b75] flex-1">
-                                    {{ chapter.title }}
+                                <router-link :to="`/book/${book.id}/${chapter.chapterNo}`"
+                                    class=" max-w-[25rem] text-gray-800 hover:text-[#469b75] flex-1 my-2 whitespace-nowrap overflow-hidden text-ellipsis">
+                                    第{{chapter.chapterNo}}章 {{ chapter.title }}
                                 </router-link>
                                 <span class="text-gray-500 text-sm ml-4 whitespace-nowrap">更新时间：{{ chapter.updateTime ?
-                                    new Date(chapter.updateTime).toLocaleString('zh-CN') : '未知' }}</span>
+                                    new Date(chapter.updateTime*1000).toLocaleDateString('zh-CN') : '未知' }}</span>
                             </div>
                         </div>
                     </div>
@@ -360,7 +360,7 @@ const fetchBookDetail = async () => {
 
         // 获取章节列表
         const chaptersResponse = await bookAPI.getChapters(bookId)
-        chapters.value = chaptersResponse.data
+        chapters.value = chaptersResponse?.data?.chapters || []
 
         // 获取评论
         const commentsResponse = await bookAPI.getComments(bookId)
@@ -369,6 +369,7 @@ const fetchBookDetail = async () => {
         // 获取作者信息
         const authorResponse = await userAPI.getByName(bookData.author)
         author.value = authorResponse.data
+        console.log('Author:', author.value)
 
     } catch (error) {
         console.error('Failed to fetch book details:', error)
@@ -392,11 +393,11 @@ watch(
 // Methods
 const handleRead = () => {
     console.log('Read book')
-    // 构建路由路径: /book/bookid/chapterid
+    // 构建路由路径: /book/bookid/chapterno
     if (chapters.value.length > 0) {
         const bookId = book.value.id
-        const chapterId = chapters.value[0].chapterId
-        router.push(`/book/${bookId}/${chapterId}`)
+        const chapterNo = chapters.value[0].chapterNo
+        router.push(`/book/${bookId}/${chapterNo}`)
     }
 }
 

@@ -47,10 +47,10 @@ func SetupRouter() *gin.Engine {
 
 		// 章节相关路由
 		api.GET("/books/:book_id/chapters", handler.GetBookChapters)
-		api.GET("/books/:book_id/chapters/:chapter_id", handler.GetChapterByID)
-		api.POST("/books/:book_id/chapters/:chapter_id", handler.AddChapter)
-		api.PUT("/books/:book_id/chapters/:chapter_id", handler.UpdateChapter)
-		api.DELETE("/books/:book_id/chapters/:chapter_id", handler.DeleteChapter)
+		api.GET("/books/:book_id/chapters/:chapter_no", handler.GetChapterByNo)
+		api.POST("/books/:book_id/chapters/:chapter_no", handler.AddChapter)
+		api.PUT("/books/:book_id/chapters/:chapter_no", handler.UpdateChapter)
+		api.DELETE("/books/:book_id/chapters/:chapter_no", handler.DeleteChapter)
 
 		// 排行榜相关路由
 		api.GET("/ranks/:type", handler.GetRanks)
@@ -85,13 +85,13 @@ func SetupRouter() *gin.Engine {
 		api.PUT("/author/books/:book_id", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.UpdateBook)
 		api.DELETE("/author/books/:book_id", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.DeleteBook)
 		api.POST("/author/books/:book_id/chapters", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.AddChapter)
-		api.PUT("/author/books/:book_id/chapters/:chapter_id", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.UpdateChapter)
-		api.DELETE("/author/books/:book_id/chapters/:chapter_id", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.DeleteChapter)
+		api.PUT("/author/books/:book_id/chapters/:chapter_no", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.UpdateChapter)
+		api.DELETE("/author/books/:book_id/chapters/:chapter_no", handler.AuthMiddleware(), handler.AuthorMiddleware(), handler.DeleteChapter)
 
 		// 评论管理 - 管理员权限
 		api.GET("/comments", handler.AuthMiddleware(), handler.AdminMiddleware(), handler.GetComments) // 支持搜索和分页
 		api.DELETE("/comments/:id", handler.AuthMiddleware(), handler.AdminMiddleware(), handler.DeleteComment)
-		
+
 		// 评论搜索接口
 		api.GET("/comments/search", handler.SearchComments)
 	}

@@ -28,7 +28,7 @@
 
                     <div>
                         <h4 class="text-sm font-medium">{{ book.title }}</h4>
-                        <p v-if="book.description" class="text-xs pr-2 text-gray-500 line-clamp-3">
+                        <p v-if="book.description" class=" break-all text-xs pr-2 text-gray-500 line-clamp-3">
                             {{ book.description }}
                         </p>
                     </div>

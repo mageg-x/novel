@@ -4,8 +4,8 @@
     </div>
 
     <!-- 小屏幕 -->
-    <div
-        :class="['block md:hidden min-h-screen w-full overflow-x-hidden', currentTheme === 'night' ? 'night' : '', currentTheme === 'eye-protect' ? 'eye-protect' : '']">
+    <div :class="['block md:hidden min-h-screen w-full overflow-x-hidden', currentTheme === 'night' ? 'night' : '',
+        currentTheme === 'eye-protect' ? 'eye-protect' : '']">
         <!-- 顶部导航栏 -->
         <header class="sticky top-0 z-50 bg-[#469b75] text-white shadow-md">
             <div class="flex items-center justify-between px-4 py-3">
@@ -78,6 +78,26 @@
                         currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
                             currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
                                 'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">
+                    拼音
+                </button>
+                <button @click="toggleFishMode"
+                    class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
+                    :class="[userMode.value === 'fish' ? (currentTheme === 'night' ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border border-blue-500' :
+                        currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white border border-blue-400' :
+                            'bg-gradient-to-r from-blue-500 to-cyan-500 text-white border border-blue-400') :
+                        currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
+                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                                'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">
+                    <i class="fas fa-fish mr-1"></i>摸鱼
+                </button>
+                <button @click="showPinyin = !showPinyin"
+                    class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
+                    :class="[showPinyin ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
+                        currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
+                            'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
+                        currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
+                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                                'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">
                     注音
                 </button>
             </div>
@@ -94,7 +114,9 @@
             :class="showControls ? 'min-h-[calc(100vh-224px)]' : 'min-h-[calc(100vh-124px)]'">
             <div class="theme-text leading-relaxed break-words"
                 :style="{ fontSize: fontSize === 'large' ? '1.5rem' : fontSize === 'small' ? '0.875rem' : '1rem', lineHeight: fontSize === 'large' ? '2rem' : '1.8rem', fontFamily: fontType === 'handwriting' ? 'Yozai, Microsoft YaHei, sans-serif' : 'Microsoft YaHei, sans-serif' }">
-                <p v-for="(paragraph, index) in chapterContent" :key="index" class="mb-4" v-html="addPinyin(paragraph)">
+                <p v-for="(paragraph, index) in chapterContent" :key="index" class="mb-4"
+                    :class="{ 'is-dialogue': paragraph.startsWith('“') || paragraph.startsWith('\u0022') }"
+                    v-html="addPinyin(paragraph)">
                 </p>
             </div>
         </main>
@@ -121,152 +143,186 @@
     </div>
 
     <!-- 大屏 -->
-    <div
-        :class="['hidden md:block relative min-h-screen w-5xl my-4 mx-auto', currentTheme === 'night' ? 'night' : currentTheme === 'eye-protect' ? 'eye-protect' : 'bg-[#ebe5d8]']">
-        <!-- 面包屑导航 -->
-        <div class="max-w-7xl mx-auto px-4 py-3 text-sm theme-text">
-            <a href="/" class="hover:text-[#469b75]">首页</a>
-            <span class="mx-2">></span>
-            <a :href="`/class?category=${bookData.category}`" class="hover:text-[#469b75]">{{ bookData.category }}</a>
-            <span class="mx-2">></span>
-            <a :href="`/book/${bookId}`" class="hover:text-[#469b75]">{{ bookData.title }}</a>
-        </div>
+    <div v-if="userMode == 'working' || userMode == 'fish'" class="w-full hidden md:block" :class="userMode == 'fish' ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-400' : ''">
+        <WordHeader @exit="switchMode" @close="switchMode" />
+        <div class="mx-auto w-5xl pt-30  ">
+            <!-- 章节标题 -->
+            <h2 class="text-xl font-bold theme-text text-center mb-6">{{ chapterTitle }}</h2>
 
-        <!-- 阅读控制栏 -->
-        <div v-if="showControls" class=" w-fit mx-auto px-4 pt-2 pb-4 theme-border theme-control-bg">
-            <div class="flex items-center justify-between gap-4">
-                <div class="flex items-center gap-4">
-                    <button @click="toggleNightMode"
-                        :class="['px-3 py-1 rounded-full text-sm font-medium shadow-sm transition-all',
-                            currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white' : 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500']">
-                        关灯
-                    </button>
-                    <button @click="toggleEyeProtect"
-                        :class="['px-3 py-1 rounded-full text-sm font-medium shadow-sm transition-all',
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' : 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500']">
-                        护眼
-                    </button>
-                </div>
-                <span class="flex items-center gap-4 theme-text">字体：</span>
-                <div class="flex items-center gap-4">
-                    <button @click="setFontSize('large')"
-                        class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
-                        :class="[fontSize === 'large' ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
-                                'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
-                            currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
-                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
-                                    'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">大</button>
-                    <button @click="setFontSize('medium')"
-                        class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
-                        :class="[fontSize === 'medium' ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
-                                'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
-                            currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
-                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
-                                    'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">中</button>
-                    <button @click="setFontSize('small')"
-                        class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
-                        :class="[fontSize === 'small' ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
-                                'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
-                            currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
-                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
-                                    'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">小</button>
-                </div>
-                <div class="flex items-center gap-4">
-                    <button @click="fontType = fontType === 'handwriting' ? 'default' : 'handwriting'"
-                        class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
-                        :class="[fontType === 'handwriting' ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
-                                'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
-                            currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
-                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
-                                    'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">
-                        手写
-                    </button>
-                    <button @click="showPinyin = !showPinyin"
-                        class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
-                        :class="[showPinyin ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
-                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
-                                'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
-                            currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
-                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
-                                    'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">
-                        注音
-                    </button>
-                </div>
-                <button class="w-10 h-10 flex items-center justify-center rounded-full shadow-sm transition-all"
-                    :class="currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white' :
-                        currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-400 to-green-500 text-white' :
-                            'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500'">
-                    <i class="fas fa-volume-up text-lg"></i>
-                </button>
+            <!-- 章节内容 -->
+            <div class="theme-text leading-relaxed break-words px-16"
+                :style="{ fontSize: fontSize === 'large' ? '1.5rem' : fontSize === 'small' ? '0.875rem' : '1rem', lineHeight: fontSize === 'large' ? '2rem' : '1.8rem', fontFamily: fontType === 'handwriting' ? 'Yozai, Microsoft YaHei, sans-serif' : 'Microsoft YaHei, sans-serif' }">
+                <p v-for="(paragraph, index) in chapterContent" :key="index" class="mb-4"
+                    :class="{ 'is-dialogue': paragraph.startsWith('“') || paragraph.startsWith('\u0022') }"
+                    v-html="addPinyin(paragraph)">
+                </p>
             </div>
         </div>
-
-        <!-- 阅读区域 -->
-        <main class="w-full pt-6 ">
-            <div class="mx-auto w-fit  ">
-                <!-- 章节标题 -->
-                <h2 class="text-xl font-bold theme-text text-center mb-6">{{ chapterTitle }}</h2>
-
-                <!-- 章节内容 -->
-                <div class="theme-text leading-relaxed break-words px-16"
-                    :style="{ fontSize: fontSize === 'large' ? '1.5rem' : fontSize === 'small' ? '0.875rem' : '1rem', lineHeight: fontSize === 'large' ? '2rem' : '1.8rem', fontFamily: fontType === 'handwriting' ? 'Yozai, Microsoft YaHei, sans-serif' : 'Microsoft YaHei, sans-serif' }">
-                    <p v-for="(paragraph, index) in chapterContent" :key="index" class="mb-4"
-                        v-html="addPinyin(paragraph)">
-                    </p>
-                </div>
-
-
+        <WordFooter @onpre="previousChapter" @onnext="nextChapter" :has-previous-chapter="hasPreviousChapter" :has-next-chapter="hasNextChapter" />
+    </div>
+    <div v-else class="w-full">
+        <div
+            :class="['hidden md:block relative min-h-screen w-5xl my-4 mx-auto', currentTheme === 'night' ? 'night' : currentTheme === 'eye-protect' ? 'eye-protect' : 'bg-[#ebe5d8]']">
+            <!-- 面包屑导航 -->
+            <div class="max-w-7xl mx-auto px-4 py-3 text-sm theme-text">
+                <a href="/" class="hover:text-[#469b75]">首页</a>
+                <span class="mx-2">></span>
+                <a :href="`/class?category=${bookData.category}`" class="hover:text-[#469b75]">{{ bookData.category
+                    }}</a>
+                <span class="mx-2">></span>
+                <a :href="`/book/${bookId}`" class="hover:text-[#469b75]">{{ bookData.title }}</a>
             </div>
 
-            <!-- 章节导航 -->
-            <div class=" absolute w-full bottom-2">
-                <div class=" w-fit mx-auto flex justify-between mt-10 pt-6 gap-8 ">
-                    <button @click="previousChapter" :disabled="!hasPreviousChapter"
-                        :class="['px-4 py-2 rounded-md transition-colors disabled:cursor-not-allowed',
-                            currentTheme === 'night' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-700 disabled:text-gray-500' :
-                                currentTheme === 'eye-protect' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500' :
-                                    'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500']">
-                        上一章
+            <!-- 阅读控制栏 -->
+            <div v-if="showControls" class=" w-fit mx-auto px-4 pt-2 pb-4 theme-border theme-control-bg">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <button @click="toggleNightMode"
+                            :class="['px-3 py-1 rounded-full text-sm font-medium shadow-sm transition-all',
+                                currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white' : 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500']">
+                            关灯
+                        </button>
+                        <button @click="toggleEyeProtect"
+                            :class="['px-3 py-1 rounded-full text-sm font-medium shadow-sm transition-all',
+                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' : 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500']">
+                            护眼
+                        </button>
+                    </div>
+                    <span class="flex items-center gap-4 theme-text">字体：</span>
+                    <div class="flex items-center gap-4">
+                        <button @click="setFontSize('large')"
+                            class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
+                            :class="[fontSize === 'large' ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
+                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
+                                    'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
+                                currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
+                                    currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                                        'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">大</button>
+                        <button @click="setFontSize('medium')"
+                            class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
+                            :class="[fontSize === 'medium' ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
+                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
+                                    'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
+                                currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
+                                    currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                                        'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">中</button>
+                        <button @click="setFontSize('small')"
+                            class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
+                            :class="[fontSize === 'small' ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
+                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
+                                    'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
+                                currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
+                                    currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                                        'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">小</button>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button @click="fontType = fontType === 'handwriting' ? 'default' : 'handwriting'"
+                            class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
+                            :class="[fontType === 'handwriting' ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
+                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
+                                    'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
+                                currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
+                                    currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                                        'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">
+                            手写
+                        </button>
+                        <button @click="showPinyin = !showPinyin"
+                            class="px-2 py-1 rounded-full text-sm font-medium shadow-sm transition-all"
+                            :class="[showPinyin ? (currentTheme === 'night' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border border-purple-500' :
+                                currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border border-green-400' :
+                                    'bg-gradient-to-r from-[#469b75] to-[#3d8766] text-white border border-[#3d8766]') :
+                                currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white border border-gray-600' :
+                                    currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                                        'bg-gradient-to-r from-white to-gray-100 text-gray-700 border border-gray-200 hover:from-gray-100 hover:to-gray-200']">
+                            注音
+                        </button>
+                    </div>
+                    <button class="w-10 h-10 flex items-center justify-center rounded-full shadow-sm transition-all"
+                        :class="currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white' :
+                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-400 to-green-500 text-white' :
+                                'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500'">
+                        <i class="fas fa-volume-up text-lg"></i>
                     </button>
-
-                    <button @click="goToc"
-                        :class="['px-4 py-2 rounded-md transition-colors disabled:cursor-not-allowed',
-                            currentTheme === 'night' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-700 disabled:text-gray-500' :
-                                currentTheme === 'eye-protect' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500' :
-                                    'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500']">
-                        目录
-                    </button>
-
-                    <button @click="nextChapter" :disabled="!hasNextChapter"
-                        :class="['px-4 py-2 rounded-md transition-colors disabled:cursor-not-allowed',
-                            currentTheme === 'night' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-700 disabled:text-gray-500' :
-                                currentTheme === 'eye-protect' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500' :
-                                    'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500']">
-                        下一章
+                    <button class="w-10 h-10 flex items-center justify-center rounded-full shadow-sm transition-all ml-2" 
+                        :class="currentTheme === 'night' ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white' :
+                            currentTheme === 'eye-protect' ? 'bg-gradient-to-r from-green-400 to-green-500 text-white' :
+                                'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 hover:from-gray-400 hover:to-gray-500'"
+                        @click="toggleFishMode">
+                        <i class="fas fa-fish text-lg"></i>
                     </button>
                 </div>
             </div>
 
-        </main>
+            <!-- 阅读区域 -->
+            <main class="w-full pt-6 ">
+                <div class="mx-auto w-fit  ">
+                    <!-- 章节标题 -->
+                    <h2 class="text-xl font-bold theme-text text-center mb-6">{{ chapterTitle }}</h2>
+
+                    <!-- 章节内容 -->
+                    <div class="theme-text leading-relaxed break-words px-16"
+                        :style="{ fontSize: fontSize === 'large' ? '1.5rem' : fontSize === 'small' ? '0.875rem' : '1rem', lineHeight: fontSize === 'large' ? '2rem' : '1.8rem', fontFamily: fontType === 'handwriting' ? 'Yozai, Microsoft YaHei, sans-serif' : 'Microsoft YaHei, sans-serif' }">
+                        <p v-for="(paragraph, index) in chapterContent" :key="index" class="mb-4"
+                            :class="{ 'is-dialogue': paragraph.startsWith('“') || paragraph.startsWith('\u0022') }"
+                            v-html="addPinyin(paragraph)"></p>
+                    </div>
+                </div>
+
+                <!-- 章节导航 -->
+                <div class=" absolute w-full bottom-2">
+                    <div class=" w-fit mx-auto flex justify-between mt-10 pt-6 gap-8 ">
+                        <button @click="previousChapter" :disabled="!hasPreviousChapter"
+                            :class="['px-4 py-2 rounded-md transition-colors disabled:cursor-not-allowed',
+                                currentTheme === 'night' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-700 disabled:text-gray-500' :
+                                    currentTheme === 'eye-protect' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500' :
+                                        'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500']">
+                            上一章
+                        </button>
+
+                        <button @click="goToc"
+                            :class="['px-4 py-2 rounded-md transition-colors disabled:cursor-not-allowed',
+                                currentTheme === 'night' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-700 disabled:text-gray-500' :
+                                    currentTheme === 'eye-protect' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500' :
+                                        'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500']">
+                            目录
+                        </button>
+
+                        <button @click="nextChapter" :disabled="!hasNextChapter"
+                            :class="['px-4 py-2 rounded-md transition-colors disabled:cursor-not-allowed',
+                                currentTheme === 'night' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-700 disabled:text-gray-500' :
+                                    currentTheme === 'eye-protect' ? 'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500' :
+                                        'bg-[#469b75] hover:bg-[#3d8766] text-white disabled:bg-gray-300 disabled:text-gray-500']">
+                            下一章
+                        </button>
+                    </div>
+                </div>
+
+            </main>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Header from '@/components/Header.vue'
 import ToolBar from '@/components/ToolBar.vue'
+import WordHeader from '@/components/WordHeader.vue'
+import WordFooter from '@/components/WordFooter.vue'
+import pinyin from 'pinyin'
+import { numToChinese } from '../utils/tiny'
 import { bookAPI } from '@/api/services'
+import { useUiStore } from '@/stores/ui.js'
+
+// 创建 ui store 实例
+const uiStore = useUiStore()
 
 // 路由和导航
 const route = useRoute()
 const router = useRouter()
-const bookId = route.params.bookId
-const chapterId = route.params.chapterId
+const bookId = parseInt(route.params.bookId, 10);
+const chapterNo = ref(parseInt(route.params.chapterNo, 10));
+
 
 // 状态管理
 const currentTheme = ref('') // '' 表示默认主题, 'night' 表示深色主题, 'eye-protect' 表示护眼主题
@@ -276,6 +332,18 @@ const scrollThreshold = 50
 const fontSize = ref('medium') // 'small', 'medium', 'large'
 const fontType = ref('default') // 'default', 'handwriting'
 const showPinyin = ref(false)
+const userMode = ref('working')
+
+// 切换摸鱼模式
+const toggleFishMode = () => {
+    userMode.value = userMode.value === 'fish' ? 'working' : 'fish'
+    // 摸鱼模式时隐藏footer
+    if (userMode.value === 'fish') {
+        uiStore.hideFooter()
+    } else {
+        uiStore.displayFooter()
+    }
+}
 
 // 数据
 const bookData = ref({
@@ -284,7 +352,7 @@ const bookData = ref({
 })
 
 const currentChapter = ref({
-    id: '',
+    chapterNo: '',
     title: '',
     content: []
 })
@@ -294,19 +362,25 @@ const error = ref(null)
 
 // 计算属性
 const bookTitle = computed(() => bookData.value.title)
-const chapterTitle = computed(() => currentChapter.value.title)
+const chapterTitle = computed(() => '第' + numToChinese(currentChapter.value.chapterNo) + '章 ' + currentChapter.value.title)
 const chapterContent = computed(() => {
-    const content = currentChapter.value.content
-    if (!content || typeof content !== 'string') return []
-    return content.split(/\n\n+/).filter(paragraph => paragraph.trim())
+  const content = currentChapter.value.content
+  if (!content || typeof content !== 'string') return []
+  
+  return content
+    .split(/\n+/)
+    .map(paragraph => paragraph.trim())
+    .filter(paragraph => paragraph.trim())
+    .map(paragraph => paragraph.replace(/^[\u3000\s\t]+/, ''))
 })
 const hasPreviousChapter = computed(() => {
-    const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
-    return currentIndex > 0
+    return chapterNo.value > 1
 })
 const hasNextChapter = computed(() => {
-    const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
-    return currentIndex < bookData.value.chapters.length - 1
+    // 获取 bookData.value.chapters 最大索引
+    if (!bookData.value.chapters || bookData.value.chapters.length === 0) return false
+    const maxChapNo = bookData.value.chapters[bookData.value.chapters.length - 1]?.chapterNo || 0;
+    return chapterNo.value < maxChapNo
 })
 
 // 字体和主题控制
@@ -331,9 +405,6 @@ const toggleEyeProtect = () => {
         document.body.classList.remove('night')
     }
 }
-
-// 注音功能
-import pinyin from 'pinyin'
 
 const addPinyin = (text) => {
     if (!showPinyin.value) {
@@ -362,17 +433,20 @@ const goToc = () => {
 
 const previousChapter = () => {
     if (hasPreviousChapter.value) {
-        const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
+        const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterNo === chapterNo.value)
+        if (currentIndex === -1) return
         const previousChapter = bookData.value.chapters[currentIndex - 1]
-        router.push(`/book/${bookId}/${previousChapter.chapterId}`)
+        console.log('previousChapter', previousChapter)
+        router.push(`/book/${bookId}/${previousChapter.chapterNo}`)
     }
 }
 
 const nextChapter = () => {
     if (hasNextChapter.value) {
-        const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterId === chapterId)
+        const currentIndex = bookData.value.chapters.findIndex(chapter => chapter.chapterNo === chapterNo.value)
+        if (currentIndex === -1) return
         const nextChapter = bookData.value.chapters[currentIndex + 1]
-        router.push(`/book/${bookId}/${nextChapter.chapterId}`)
+        router.push(`/book/${bookId}/${nextChapter.chapterNo}`)
     }
 }
 
@@ -388,9 +462,9 @@ const fetchChapterContent = async () => {
         ])
 
         bookData.value = bookInfoResponse.data
-        bookData.value.chapters = chaptersResponse.data
+        bookData.value.chapters = chaptersResponse?.data?.chapters || []
 
-        const chapterContentResponse = await bookAPI.getChapter(bookId, chapterId)
+        const chapterContentResponse = await bookAPI.getChapter(bookId, chapterNo.value)
         currentChapter.value = chapterContentResponse.data
     } catch (err) {
         console.error('Failed to fetch chapter content:', err)
@@ -423,6 +497,23 @@ const handleScroll = throttle(() => {
     }
 }, 100);
 
+function switchMode () { 
+    // 如果当前是摸鱼模式，切换回正常模式；否则在工作模式和正常模式之间切换
+    if (userMode.value === 'fish') {
+        userMode.value = 'normal'
+    } else {
+        userMode.value = userMode.value === 'working' ? 'normal' : 'working'
+    }
+    
+    if (userMode.value === 'normal') {
+        // 显示 footer
+        uiStore.displayFooter()
+    } else {
+        // 隐藏 footer（工作模式和摸鱼模式都隐藏footer）
+        uiStore.hideFooter()
+    }
+}
+
 // 生命周期
 onMounted(() => {
     fetchChapterContent()
@@ -432,6 +523,12 @@ onMounted(() => {
 onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll)
 })
+
+// 监听路由参数变化，更新chapterNo并重新获取内容
+watch(() => route.params.chapterNo, (newChapterNo) => {
+  chapterNo.value = parseInt(newChapterNo, 10);
+  fetchChapterContent();
+}, { immediate: true });
 </script>
 
 <style>
@@ -464,12 +561,17 @@ onUnmounted(() => {
 }
 
 .theme-text p {
+    text-indent: 2em;      /* 首行缩进两个汉字 */
+    margin: 0 0 1.2em 0;   /* 统一段间距 */
+    word-break: break-word;
     line-height: 2.2;
     text-align: justify;
-    margin-bottom: 1em;
-    padding: 0.2em 0;
 }
-
+/* 对话段落：取消缩进，左侧加 padding 模拟对齐 */
+.theme-text p.is-dialogue {
+  text-indent: 0;
+  margin-left: 1em;    /* 可选：进一步微调整体位置 */
+}
 .theme-text rp {
     display: none;
 }

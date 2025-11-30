@@ -35,7 +35,10 @@
                 <!-- 轮播容器 -->
                 <div class="overflow-hidden rounded-lg">
                     <div class="flex transition-transform duration-500 ease-in-out"
-                        :style="{ transform: `translateX(-${featuredCurrentIndex * 100}%)` }">
+                        :style="{ transform: `translateX(-${featuredCurrentIndex * 100}%)` }"
+                        @touchstart="handleTouchStart"
+                        @touchmove="handleTouchMove"
+                        @touchend="handleTouchEnd">
                         <div v-for="(book, index) in featuredBooks" :key="`featured-${index}`"
                             class="w-full flex-shrink-0">
                             <div class="bg-white rounded-lg overflow-hidden shadow-sm cursor-pointer"
@@ -244,7 +247,7 @@
                                         class=" hover:bg-gray-50 transition-colors cursor-pointer"
                                         @click="navigateToBook(item.id)">
                                         <td class="px-4 py-3 text-sm text-gray-600">{{ item.category }}</td>
-                                        <td class="px-4 py-3 text-sm font-medium">{{ item.title }}</td>
+                                        <td class="px-4 py-3 max-w-48 text-ellipsis overflow-hidden whitespace-nowrap text-sm font-medium">{{ item.title }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600">{{ item.latestChapter }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600">{{ item.author }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-500">{{ item.updateTime }}</td>
@@ -265,8 +268,8 @@
 
 </template>
 
-<script setup>
-import { ref, onMounted, computed } from 'vue'
+<script name="Home" setup>
+import { ref, onMounted, onUnmounted, onActivated, onDeactivated, computed } from 'vue'
 import Header from '@/components/Header.vue'
 import RankList from '@/components/RankList.vue'
 import { useRouter } from 'vue-router'
@@ -279,12 +282,44 @@ const currentIndex = ref(0)
 
 // 精品推荐轮播当前索引
 const featuredCurrentIndex = ref(0)
+// 触摸滑动相关变量
+const touchStartX = ref(0)
+const touchEndX = ref(0)
+let   featuredTimer = null
 
 // 导航到书籍详情页
 const navigateToBook = (bookId) => {
     router.push(`/book/${bookId}`)
 }
 
+// 触摸滑动事件处理
+const handleTouchStart = (e) => {
+    touchStartX.value = e.changedTouches[0].screenX
+}
+
+const handleTouchMove = (e) => {
+    touchEndX.value = e.changedTouches[0].screenX
+}
+
+const handleTouchEnd = () => {
+    // 计算滑动距离
+    const diff = touchStartX.value - touchEndX.value
+    // 设置最小滑动距离阈值
+    const minSwipeDistance = 50
+    
+    // 判断滑动方向
+    if (diff > minSwipeDistance) {
+        // 向左滑动，显示下一张
+        if (featuredCurrentIndex.value < featuredBooks.value.length - 1) {
+            featuredCurrentIndex.value++
+        }
+    } else if (diff < -minSwipeDistance) {
+        // 向右滑动，显示上一张
+        if (featuredCurrentIndex.value > 0) {
+            featuredCurrentIndex.value--
+        }
+    }
+}
 
 // 将模拟数据替换为响应式变量
 const mainBooks = ref([])
@@ -307,7 +342,7 @@ function setCurrentIndex(index) {
     }
 }
 
-onMounted(async () => {
+async function  fetchData() { 
     try {
         // 并行获取所有需要的数据
         const [
@@ -332,8 +367,8 @@ onMounted(async () => {
 
         // 提取并处理各响应数据
         mainBooks.value = (curatedBooksResponse.data || []).map(item => item.book).slice(0, 6) || []
-        weeklyBooks.value = (topBooksResponse.data || []).map(item => item.book).slice(0, 6) || []
-        hotBooks.value = (hotBooksResponse.data || []).map(item => item.book).slice(0, 6) || []
+        weeklyBooks.value = (topBooksResponse.data || []).map(item => item.book).slice(0, 3) || []
+        hotBooks.value = (hotBooksResponse.data || []).map(item => item.book).slice(0, 8) || []
         featuredBooks.value = (featuredBooksResponse.data || []).map(item => item.book).slice(0, 6) || []
         clickBooks.value = (clickRankResponse.data || []).map(item => item.book).slice(0, 6) || []
         newBooks.value = (newBookRankResponse.data || []).map(item => item.book).slice(0, 6) || []
@@ -342,17 +377,53 @@ onMounted(async () => {
 
     } catch (error) {
         console.error('Failed to fetch data:', error)
-    }
+    }    
+}
 
+onMounted(async () => {
+    await fetchData()
     // 精品推荐自动轮播
     if (featuredBooks.value.length > 0) {
-        const featuredTimer = setInterval(() => {
+        featuredTimer = setInterval(() => {
             featuredCurrentIndex.value = (featuredCurrentIndex.value + 1) % featuredBooks.value.length
         }, 3000)
     }
 
     console.log('Component mounted.')
 })
+
+// 组件卸载时清除定时器
+onUnmounted(() => {
+    if (featuredTimer) {
+        clearInterval(featuredTimer)
+        featuredTimer = null
+    }
+})
+
+// 组件激活时触发（从缓存中恢复）
+onActivated( async () => {
+  console.log('Component activated.')
+
+  await fetchData()
+  // 重新启动轮播定时器
+  if (featuredBooks.value.length > 0 && !featuredTimer) {
+    featuredTimer = setInterval(() => {
+      featuredCurrentIndex.value = (featuredCurrentIndex.value + 1) % featuredBooks.value.length
+    }, 3000)
+  }
+})
+
+// 组件失活时触发（被缓存）
+onDeactivated(() => {
+  console.log('Component deactivated.')
+  
+  // 清除轮播定时器，避免内存泄漏
+  if (featuredTimer) {
+    clearInterval(featuredTimer)
+    featuredTimer = null
+  }
+})
+
 </script>
 
 <style scoped>

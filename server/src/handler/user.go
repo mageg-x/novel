@@ -18,8 +18,12 @@ type LoginRequest struct {
 func SearchUsers(c *gin.Context) {
 	// 检查UserService指针是否为nil
 	if us == nil {
-		logger.Errorf("UserService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户服务未初始化"})
+		logger.Errorf("UserService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "User service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 
@@ -39,14 +43,22 @@ func SearchUsers(c *gin.Context) {
 	offset := (page - 1) * pageSize
 	users, total, err := ss.SearchUsers(keyword, pageSize, offset)
 	if err != nil {
-		logger.Errorf("搜索用户失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索用户失败"})
+		logger.Errorf("Failed to search users: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to search users",
+			"data":    nil,
+		})
 		return
 	}
 
+	// 移除每个user对象的password字段
+	for i := range users {
+		users[i].Password = ""
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data": gin.H{
 			"users": users,
 			"total": total,
@@ -58,8 +70,12 @@ func SearchUsers(c *gin.Context) {
 func SearchComments(c *gin.Context) {
 	// 检查SearchService指针是否为nil
 	if ss == nil {
-		logger.Errorf("SearchService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索服务未初始化"})
+		logger.Errorf("SearchService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Search service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 
@@ -79,14 +95,18 @@ func SearchComments(c *gin.Context) {
 	offset := (page - 1) * pageSize
 	comments, total, err := ss.SearchComments(keyword, pageSize, offset)
 	if err != nil {
-		logger.Errorf("搜索评论失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索评论失败"})
+		logger.Errorf("Failed to search comments: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to search comments",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data": gin.H{
 			"comments": comments,
 			"total":    total,
@@ -97,35 +117,53 @@ func SearchComments(c *gin.Context) {
 func Login(c *gin.Context) {
 	// 检查UserService指针是否为nil
 	if us == nil {
-		logger.Errorf("UserService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户服务未初始化"})
+		logger.Errorf("UserService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "User service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Errorf("用户登录参数错误: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		logger.Errorf("User login parameter error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
 	user, err := us.Login(req.Username, req.Password)
 	if err != nil {
-		logger.Errorf("用户登录失败: %v", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
+		logger.Errorf("User login failed: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": "Invalid username or password",
+			"data":    nil,
+		})
 		return
 	}
 
 	// 生成JWT令牌
 	token, err := util.GenerateToken(user)
 	if err != nil {
-		logger.Errorf("生成令牌失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "生成令牌失败"})
+		logger.Errorf("Failed to generate token: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to generate token",
+			"data":    nil,
+		})
 		return
 	}
 
+	// 移除password字段
+	user.Password = ""
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "登录成功",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data": gin.H{
 			"user":  user,
 			"token": token,
@@ -152,34 +190,56 @@ type RegisterRequest struct {
 func Register(c *gin.Context) {
 	// 检查UserService指针是否为nil
 	if us == nil {
-		logger.Errorf("UserService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户服务未初始化"})
+		logger.Errorf("UserService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "User service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Errorf("参数错误 %+v: %v", req, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		logger.Errorf("Parameter error %+v: %v", req, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
 	user, err := us.Register(req.Username, req.Password, req.Nickname, req.Avatar, req.Type, req.Desc, req.Level, req.Sex, req.IsVip, req.Location, req.Status, req.Email)
 	if err != nil {
-		logger.Errorf("用户注册失败: %v", err)
+		logger.Errorf("User registration failed: %v", err)
 		// 根据错误类型返回不同的HTTP状态码
 		if err.Error() == "用户名已存在" {
-			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			c.JSON(http.StatusConflict, gin.H{
+				"code":    http.StatusConflict,
+				"message": "Username already exists",
+				"data":    nil,
+			})
 		} else if err.Error() == "参数错误" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": "Invalid parameters",
+				"data":    nil,
+			})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code":    http.StatusInternalServerError,
+				"message": err.Error(),
+				"data":    nil,
+			})
 		}
 		return
 	}
 
+	// 移除password字段
+	user.Password = ""
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "注册成功",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data":    user,
 	})
 }
@@ -188,28 +248,40 @@ func Register(c *gin.Context) {
 func GetUserShelf(c *gin.Context) {
 	// 检查UserService指针是否为nil
 	if us == nil {
-		logger.Errorf("UserService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户服务未初始化"})
+		logger.Errorf("UserService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "User service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	userIDStr := c.Param("user_id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
 	if err != nil {
-		logger.Errorf("获取用户书架-无效的用户ID: %s, 错误: %v", userIDStr, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
+		logger.Errorf("Get user shelf - invalid user ID: %s, error: %v", userIDStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid user ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	shelves, err := us.GetUserShelf(uint(userID))
 	if err != nil {
-		logger.Errorf("获取用户书架失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户书架失败"})
+		logger.Errorf("Failed to get user shelf: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get user shelf",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data":    shelves,
 	})
 }
@@ -222,34 +294,51 @@ type AddShelfRequest struct {
 func AddToShelf(c *gin.Context) {
 	// 检查UserService指针是否为nil
 	if us == nil {
-		logger.Errorf("UserService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户服务未初始化"})
+		logger.Errorf("UserService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "User service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	userIDStr := c.Param("user_id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
 	if err != nil {
-		logger.Errorf("添加书籍到书架-无效的用户ID: %s, 错误: %v", userIDStr, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
+		logger.Errorf("Add book to shelf - invalid user ID: %s, error: %v", userIDStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid user ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	var req AddShelfRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Errorf("添加书籍到书架-参数错误: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		logger.Errorf("Add book to shelf - parameter error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
 	if err := us.AddToShelf(uint(userID), req.BookID); err != nil {
-		logger.Errorf("添加书籍到书架失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "添加书籍到书架失败"})
+		logger.Errorf("Failed to add book to shelf: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to add book to shelf",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "添加书籍到书架成功",
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data":    nil,
 	})
 }
 
@@ -257,35 +346,52 @@ func AddToShelf(c *gin.Context) {
 func RemoveFromShelf(c *gin.Context) {
 	// 检查UserService指针是否为nil
 	if us == nil {
-		logger.Errorf("UserService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户服务未初始化"})
+		logger.Errorf("UserService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "User service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	userIDStr := c.Param("user_id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
 	if err != nil {
-		logger.Errorf("从书架移除书籍-无效的用户ID: %s, 错误: %v", userIDStr, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
+		logger.Errorf("Remove book from shelf - invalid user ID: %s, error: %v", userIDStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid user ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	bookIDStr := c.Param("book_id")
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
-		logger.Errorf("从书架移除书籍-无效的书籍ID: %s, 错误: %v", bookIDStr, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		logger.Errorf("Remove book from shelf - invalid book ID: %s, error: %v", bookIDStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	if err := us.RemoveFromShelf(uint(userID), uint(bookID)); err != nil {
-		logger.Errorf("从书架移除书籍失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "从书架移除书籍失败"})
+		logger.Errorf("Failed to remove book from shelf: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to remove book from shelf",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "从书架移除书籍成功",
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data":    nil,
 	})
 }
 
@@ -293,77 +399,110 @@ func RemoveFromShelf(c *gin.Context) {
 func GetUserHistory(c *gin.Context) {
 	// 检查UserService指针是否为nil
 	if us == nil {
-		logger.Errorf("UserService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户服务未初始化"})
+		logger.Errorf("UserService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "User service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	userIDStr := c.Param("user_id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
 	if err != nil {
-		logger.Errorf("获取用户阅读历史-无效的用户ID: %s, 错误: %v", userIDStr, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
+		logger.Errorf("Get user reading history - invalid user ID: %s, error: %v", userIDStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid user ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	histories, err := us.GetUserHistory(uint(userID))
 	if err != nil {
-		logger.Errorf("获取用户阅读历史失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户阅读历史失败"})
+		logger.Errorf("Failed to get user reading history: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get user reading history",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data":    histories,
 	})
 }
 
 // 更新阅读进度
 type UpdateReadingProgressRequest struct {
-	ChapterID       uint `json:"chapterId" binding:"required"`
+	ChapterNo       uint `json:"chapterNo" binding:"required"`
 	ReadingProgress int  `json:"readingProgress" binding:"min=0,max=100"`
 }
 
 func UpdateReadingProgress(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		logger.Errorf("BookService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "书籍服务未初始化"})
+		logger.Errorf("BookService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Book service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	userIDStr := c.Param("user_id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
 	if err != nil {
-		logger.Errorf("更新阅读进度-无效的用户ID: %s, 错误: %v", userIDStr, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
+		logger.Errorf("Update reading progress - invalid user ID: %s, error: %v", userIDStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid user ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	bookIDStr := c.Param("book_id")
 	bookID, err := strconv.ParseUint(bookIDStr, 10, 32)
 	if err != nil {
-		logger.Errorf("更新阅读进度-无效的书籍ID: %s, 错误: %v", bookIDStr, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的书籍ID"})
+		logger.Errorf("Update reading progress - invalid book ID: %s, error: %v", bookIDStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid book ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	var req UpdateReadingProgressRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Errorf("更新阅读进度-参数错误: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		logger.Errorf("Update reading progress - parameter error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
-	if err := us.UpdateReadingProgress(uint(userID), uint(bookID), req.ChapterID, req.ReadingProgress); err != nil {
-		logger.Errorf("更新阅读进度失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新阅读进度失败"})
+	if err := us.UpdateReadingProgress(uint(userID), uint(bookID), req.ChapterNo, req.ReadingProgress); err != nil {
+		logger.Errorf("Failed to update reading progress: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to update reading progress",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "更新阅读进度成功",
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data":    nil,
 	})
 }
 
@@ -371,28 +510,40 @@ func UpdateReadingProgress(c *gin.Context) {
 func GetUserByID(c *gin.Context) {
 	// 检查UserService指针是否为nil
 	if us == nil {
-		logger.Errorf("UserService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户服务未初始化"})
+		logger.Errorf("UserService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "User service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	userIDStr := c.Param("user_id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
 	if err != nil {
-		logger.Errorf("获取用户信息-无效的用户ID: %s, 错误: %v", userIDStr, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
+		logger.Errorf("Get user info - invalid user ID: %s, error: %v", userIDStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid user ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	user, err := us.GetUserByID(uint(userID))
 	if err != nil {
-		logger.Errorf("获取用户信息失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		logger.Errorf("Failed to get user info: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get user info",
+			"data":    nil,
+		})
 		return
 	}
-
+	user.Password = ""
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data":    user,
 	})
 }
@@ -401,41 +552,66 @@ func GetUserByID(c *gin.Context) {
 func GetUserByName(c *gin.Context) {
 	name := c.Param("name")
 	if name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "用户名不能为空"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Username cannot be empty",
+			"data":    nil,
+		})
 		return
 	}
 
 	user, err := us.GetUserByName(name)
 	if err != nil {
-		logger.Errorf("获取用户信息失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "获取用户信息失败"})
+		logger.Errorf("Failed to get user info: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get user info",
+			"data":    nil,
+		})
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{"code": 200, "message": "获取用户信息成功", "data": user})
+	// 移除password字段
+	user.Password = ""
+	c.JSON(http.StatusOK, gin.H{
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data":    user,
+	})
 }
 
 // 更新用户信息
 func UpdateUser(c *gin.Context) {
 	// 检查UserService指针是否为nil
 	if us == nil {
-		logger.Errorf("UserService未初始化")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户服务未初始化"})
+		logger.Errorf("UserService not initialized")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "User service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	userIDStr := c.Param("user_id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
 	if err != nil {
-		logger.Errorf("更新用户信息-无效的用户ID: %s, 错误: %v", userIDStr, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
+		logger.Errorf("Update user info - invalid user ID: %s, error: %v", userIDStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid user ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	// 获取现有用户
 	user, err := us.GetUserByID(uint(userID))
 	if err != nil {
-		logger.Errorf("更新用户信息-获取用户信息失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		logger.Errorf("Update user info - failed to get user info: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get user info",
+			"data":    nil,
+		})
 		return
 	}
 
@@ -450,8 +626,12 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Errorf("更新用户信息-参数错误: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		logger.Errorf("Update user info - parameter error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid parameters",
+			"data":    nil,
+		})
 		return
 	}
 
@@ -474,14 +654,20 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	if err := us.UpdateUser(user); err != nil {
-		logger.Errorf("更新用户信息失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新用户信息失败"})
+		logger.Errorf("Failed to update user info: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to update user info",
+			"data":    nil,
+		})
 		return
 	}
 
+	// 移除password字段
+	user.Password = ""
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "更新用户信息成功",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data":    user,
 	})
 }

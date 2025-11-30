@@ -277,7 +277,7 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <template v-if="chapters.length > 0">
-                                    <tr v-for="chapter in paginatedChapters" :key="chapter.chapterId"
+                                    <tr v-for="chapter in paginatedChapters" :key="chapter.chapterNo"
                                         class="hover:bg-gray-50 transition-colors">
                                         <td
                                             class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 md:px-4 md:py-3">

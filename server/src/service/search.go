@@ -24,7 +24,7 @@ import (
 // 全局搜索服务实例
 var (
 	jieba    *gojieba.Jieba
-	SService = newSearchService()
+	SService *SearchService
 	// 使用读写锁代替互斥锁，允许多个读操作同时进行
 	mu = sync.RWMutex{}
 )
@@ -77,8 +77,8 @@ func init() {
 	})
 }
 
-func newSearchService() *SearchService {
-	indexDir := filepath.Join(DataDir, "search")
+func NewSearchService(dateDir string) *SearchService {
+	indexDir := filepath.Join(dateDir, "search")
 	return &SearchService{indexDir: indexDir}
 }
 
@@ -766,14 +766,11 @@ func (s *SearchService) updateIndexIncrementally() error {
 
 	// 获取最后更新的时间戳
 	var lastUpdateTime time.Time
-
-	// 查询数据库中最近更新的数据
-	var lastBook model.Book
-	// 添加索引和限制以加速查询
-	if err := DB.Order("update_time desc").Limit(1).First(&lastBook).Error; err == nil {
-		lastUpdateTime = lastBook.UpdateTime
+	err := DB.Model(&model.Book{}).Select("MAX(update_time)").Row().Scan(&lastUpdateTime)
+	if err == nil && !lastUpdateTime.IsZero() {
+		logger.Infof("上次更新时间: %v", lastUpdateTime)
 	} else {
-		// 如果没有数据，使用当前时间的前一天
+		// 没有数据或出错，使用默认时间
 		lastUpdateTime = time.Now().AddDate(0, 0, -1)
 	}
 

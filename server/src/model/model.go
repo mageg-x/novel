@@ -18,53 +18,42 @@ var EventChannel = make(chan ModelEvent, 100)
 
 // Book 对应表: books
 type Book struct {
-	ID                 uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
-	Title              string    `gorm:"column:title;type:text;not null" json:"title"`
-	Author             string    `gorm:"column:author;type:text;not null" json:"author"`
-	Cover              string    `gorm:"column:cover;type:text" json:"cover"`
-	Category           string    `gorm:"column:category;type:text;not null;index:idx_books_category" json:"category"`
-	Channel            string    `gorm:"column:channel;type:text;not null;default:male" json:"channel"` // male/female
-	Description        string    `gorm:"column:description;type:text" json:"description"`
-	Status             string    `gorm:"column:status;type:text;not null;default:serializing" json:"status"` // serializing/completed
-	WordCount          int       `gorm:"column:word_count;type:integer;default:0" json:"wordCount"`
-	ClickCount         int       `gorm:"column:click_count;type:integer;default:0" json:"clickCount"`
-	CommentCount       int       `gorm:"column:comment_count;type:integer;default:0" json:"commentCount"`
-	LatestChapterID    *uint     `gorm:"column:latest_chapter_id;type:integer" json:"latestChapterId"` // 可为 NULL
-	LatestChapterTitle string    `gorm:"column:latest_chapter_title;type:text" json:"latestChapterTitle"`
-	CreateTime         time.Time `gorm:"column:create_time;autoCreateTime" json:"createTime"`
-	UpdateTime         time.Time `gorm:"column:update_time;autoUpdateTime;index:idx_books_update_time" json:"updateTime"`
-	Volumes            []Volume  `gorm:"foreignKey:BookID;references:ID" json:"volumes,omitempty"`
-	Chapters           []Chapter `gorm:"foreignKey:BookID;references:ID" json:"chapters,omitempty"`
+	ID           uint      `gorm:"primaryKey;index:idx_id;column:id" json:"id"`
+	Title        string    `gorm:"column:title;type:text;not null;index:idx_title" json:"title"`
+	Author       string    `gorm:"column:author;type:text;not null;index:idx_author" json:"author"`
+	Cover        string    `gorm:"column:cover;type:text" json:"cover"`
+	Category     string    `gorm:"column:category;type:text;not null;index:idx_books_category" json:"category"`
+	Channel      string    `gorm:"column:channel;type:text;not null;default:male;index:idx_channel" json:"channel"` // male/female
+	Description  string    `gorm:"column:description;type:text" json:"description"`
+	Status       string    `gorm:"column:status;type:text;not null;default:serializing;index:idx_status" json:"status"` // serializing/completed
+	WordCount    int       `gorm:"column:word_count;type:integer;default:0" json:"wordCount"`
+	ClickCount   int       `gorm:"column:click_count;type:integer;default:0;index:idx_click_count" json:"clickCount"`
+	CommentCount int       `gorm:"column:comment_count;type:integer;default:0" json:"commentCount"`
+	CreateTime   time.Time `gorm:"column:create_time;autoCreateTime" json:"createTime"`
+	UpdateTime   time.Time `gorm:"column:update_time;autoUpdateTime;index:idx_books_update_time" json:"updateTime"`
 }
 
-// Volume 对应表: volumes
-type Volume struct {
-	ID       uint   `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
-	BookID   uint   `gorm:"column:book_id;not null;uniqueIndex:idx_book_volume" json:"bookId"`
-	VolumeNo uint   `gorm:"column:volume_no;not null;uniqueIndex:idx_book_volume" json:"volumeNo"` // 卷序号：1,2,3...
-	Title    string `gorm:"column:title;type:text;not null" json:"title"`
+type Chapters struct {
+	BookName      string    `json:"bookName"`
+	TotalChapters uint      `json:"totalChapters"`
+	MaxChapterNo  uint      `json:"maxChapterNo"`
+	Chapters      []Chapter `json:"chapters"`
 }
 
-// Chapter 对应表: chapters
-// Chapter 对应表: chapters
 type Chapter struct {
-	ID         uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
-	BookID     uint      `gorm:"column:book_id;not null;uniqueIndex:uk_book_volume_chapter" json:"bookId"`
-	VolumeNo   uint      `gorm:"column:volume_no;not null;default:0;uniqueIndex:uk_book_volume_chapter" json:"volumeNo"` // 0 表示无卷
-	ChapterID  uint      `gorm:"column:chapter_id;not null;uniqueIndex:uk_book_volume_chapter" json:"chapterId"`
-	Title      string    `gorm:"column:title;type:text;not null" json:"title"`
-	Content    string    `gorm:"-" json:"content"`
-	IsVip      bool      `gorm:"column:is_vip;not null;default:false" json:"isVip"`
-	CreateTime time.Time `gorm:"column:create_time;autoCreateTime" json:"createTime"`
-	UpdateTime time.Time `gorm:"column:update_time;autoUpdateTime" json:"updateTime"`
-	Volume     *Volume   `gorm:"-" json:"volume,omitempty"`
+	ChapterNo  uint   `json:"chapterNo"`
+	Title      string `json:"title"`
+	Content    string `json:"content"`
+	IsVip      bool   `json:"isVip"`
+	CreateTime int64  `json:"createTime"` // 秒级时间戳
+	UpdateTime int64  `json:"updateTime"`
 }
 
 // User 对应表: users
 type User struct {
 	ID         uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	Username   string    `gorm:"column:username;type:text;not null;unique" json:"username"`
-	Password   string    `gorm:"column:password;type:text;not null" json:"password"`
+	Password   string    `gorm:"column:password;type:text;not null" json:"password,omitempty"`
 	Nickname   string    `gorm:"column:nickname;type:text" json:"nickname"`
 	Avatar     string    `gorm:"column:avatar;type:text" json:"avatar"`
 	Type       string    `gorm:"column:type;type:text;not null;default:normal" json:"type"` // 作家/读者/管理员
@@ -77,7 +66,7 @@ type User struct {
 	Email      string    `gorm:"column:email;type:text" json:"email"`
 	Phone      string    `gorm:"column:phone;type:text" json:"phone"`
 	CreateTime time.Time `gorm:"column:create_time;autoCreateTime" json:"createTime"`
-	UpdateTime time.Time `gorm:"column:update_time;autoUpdateTime" json:"updateTime"`
+	UpdateTime time.Time `gorm:"column:update_time;index:idx_user_update_time;autoUpdateTime" json:"updateTime"`
 }
 
 // Shelf 对应表: shelf
@@ -95,11 +84,11 @@ type History struct {
 	ID              uint      `gorm:"primaryKey;autoIncrement;column:id;table:histories" json:"id"`
 	UserID          uint      `gorm:"column:user_id;type:integer;not null" json:"userId"`
 	BookID          uint      `gorm:"column:book_id;type:integer;not null" json:"bookId"`
-	ChapterID       uint      `gorm:"column:chapter_id;type:integer;not null" json:"chapterId"`
+	ChapterNo       uint      `gorm:"column:chapter_no;type:integer;not null" json:"chapterNo"`
 	ReadingProgress int       `gorm:"column:reading_progress;type:integer;default:0" json:"readingProgress"`
 	UpdateTime      time.Time `gorm:"column:update_time;autoUpdateTime" json:"updateTime"`
 	Book            Book      `gorm:"foreignKey:BookID;references:ID" json:"book,omitempty"`
-	Chapter         Chapter   `gorm:"foreignKey:ChapterID;references:ID" json:"chapter,omitempty"`
+	Chapter         Chapter   `gorm:"-" json:"chapter,omitempty"`
 }
 
 // 推荐表
@@ -135,7 +124,7 @@ type Comment struct {
 	Book         Book      `gorm:"foreignKey:BookID;references:ID" json:"book,omitempty"`
 }
 
-// CommentIndex 用于评论索引的数据结构
+// CommentIndex 用于评论索引的数据结构, 没有数据库表
 type CommentIndex struct {
 	ID           uint      `json:"id"`
 	BookTitle    string    `json:"bookTitle"`

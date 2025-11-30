@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
@@ -67,17 +68,29 @@ func setLogLevel() {
 func main() {
 	// 解析命令行参数
 	addr := flag.String("a", "0.0.0.0:3002", "服务器监听地址和端口")
+	dataDir := flag.String("d", "./data", "数据目录路径")
+	bookDir := flag.String("b", "./data/books", "书籍目录路径")
 	flag.Parse()
 
 	logger.Info("开始启动小说阅读系统...")
 
+	if _, err := filepath.Abs(*dataDir); err != nil {
+		logger.Fatalf("数据目录路径错误: %v", err)
+		return
+	}
+
 	// 初始化数据库
-	if err := service.InitDB(); err != nil {
+	if err := service.InitDB(*dataDir, *bookDir); err != nil {
 		logger.Fatalf("数据库初始化失败: %v", err)
 		return
 	}
-	logger.Info("数据库初始化完成")
 
+	logger.Info("数据库初始化完成")
+	service.SService = service.NewSearchService(*dataDir)
+	if service.SService == nil {
+		logger.Fatal("搜索服务初始化失败")
+		return
+	}
 	// 初始化搜索服务
 	if err := service.SService.InitSearch(); err != nil {
 		logger.Fatalf("搜索服务初始化失败: %v", err)

@@ -274,7 +274,7 @@ func (s *UserService) GetUserHistory(userID uint) ([]model.History, error) {
 		return nil, fmt.Errorf("数据库连接未初始化")
 	}
 	var histories []model.History
-	err := DB.Preload("Book").Preload("Chapter").Where("user_id = ?", userID).Order("update_time desc").Find(&histories).Error
+	err := DB.Preload("Book").Where("user_id = ?", userID).Order("update_time desc").Find(&histories).Error
 	if err != nil {
 		logger.Errorf("获取用户阅读历史失败[用户ID: %d]: %v", userID, err)
 		return nil, err
@@ -283,7 +283,7 @@ func (s *UserService) GetUserHistory(userID uint) ([]model.History, error) {
 }
 
 // 更新阅读进度
-func (s *UserService) UpdateReadingProgress(userID, bookID, chapterID uint, readingProgress int) error {
+func (s *UserService) UpdateReadingProgress(userID, bookID, chapterNo uint, readingProgress int) error {
 	// 检查数据库连接是否已初始化
 	if DB == nil {
 		logger.Errorf("更新阅读进度失败[用户ID: %d, 书籍ID: %d]: 数据库连接未初始化", userID, bookID)
@@ -297,23 +297,23 @@ func (s *UserService) UpdateReadingProgress(userID, bookID, chapterID uint, read
 		history = model.History{
 			UserID:          userID,
 			BookID:          bookID,
-			ChapterID:       chapterID,
+			ChapterNo:       chapterNo,
 			ReadingProgress: readingProgress,
 		}
 		if err := DB.Create(&history).Error; err != nil {
 			logger.Errorf("创建阅读记录失败[用户ID: %d, 书籍ID: %d]: %v", userID, bookID, err)
 			return err
 		}
-		logger.Infof("创建阅读记录成功[用户ID: %d, 书籍ID: %d, 章节ID: %d]", userID, bookID, chapterID)
+		logger.Infof("创建阅读记录成功[用户ID: %d, 书籍ID: %d, 章节ID: %d]", userID, bookID, chapterNo)
 	} else {
 		// 如果存在，更新记录
-		history.ChapterID = chapterID
+		history.ChapterNo = chapterNo
 		history.ReadingProgress = readingProgress
 		if err := DB.Save(&history).Error; err != nil {
 			logger.Errorf("更新阅读进度失败[用户ID: %d, 书籍ID: %d]: %v", userID, bookID, err)
 			return err
 		}
-		logger.Infof("更新阅读进度成功[用户ID: %d, 书籍ID: %d, 章节ID: %d]", userID, bookID, chapterID)
+		logger.Infof("更新阅读进度成功[用户ID: %d, 书籍ID: %d, 章节ID: %d]", userID, bookID, chapterNo)
 	}
 	return nil
 }

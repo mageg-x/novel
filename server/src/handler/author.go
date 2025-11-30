@@ -11,27 +11,39 @@ import (
 func GetAuthorInfo(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	// 获取作者ID
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的作者ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid author ID",
+			"data":    nil,
+		})
 		return
 	}
 	// 获取作者信息
 	user, err := us.GetUserByID(uint(id))
 	if err != nil {
-		logger.Errorf("获取作者信息失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取作者信息失败"})
+		logger.Errorf("Failed to get author info: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get author info",
+			"data":    nil,
+		})
 		return
 	}
 	// 返回作者信息
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data":    user,
 	})
 }
@@ -40,27 +52,39 @@ func GetAuthorInfo(c *gin.Context) {
 func GetAuthorBooks(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	// 获取作者ID
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的作者ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid author ID",
+			"data":    nil,
+		})
 		return
 	}
 	// 获取作者作品列表
 	books, err := us.GetBooksByAuthorID(uint(id))
 	if err != nil {
-		logger.Errorf("获取作者作品失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取作者作品失败"})
+		logger.Errorf("Failed to get author books: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get author books",
+			"data":    nil,
+		})
 		return
 	}
 	// 返回作者作品列表
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data":    books,
 	})
 }
@@ -69,27 +93,39 @@ func GetAuthorBooks(c *gin.Context) {
 func GetAuthorStats(c *gin.Context) {
 	// 检查BookService指针是否为nil
 	if bs == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "服务未初始化"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Service not initialized",
+			"data":    nil,
+		})
 		return
 	}
 	// 获取作者ID
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的作者ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid author ID",
+			"data":    nil,
+		})
 		return
 	}
 	// 获取作者统计数据
 	stats, err := us.GetAuthorStats(uint(id))
 	if err != nil {
-		logger.Errorf("获取作者统计数据失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取作者统计数据失败"})
+		logger.Errorf("Failed to get author statistics: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get author statistics",
+			"data":    nil,
+		})
 		return
 	}
 	// 返回作者统计数据
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
+		"code":    http.StatusOK,
+		"message": "succeed",
 		"data":    stats,
 	})
 }

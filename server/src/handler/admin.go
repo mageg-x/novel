@@ -41,25 +41,30 @@ func GetComments(c *gin.Context) {
 
 	// 计算总数
 	if err := query.Count(&total).Error; err != nil {
-		logger.Errorf("获取评论总数失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评论总数失败"})
+		logger.Errorf("Failed to get comment total count: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get comment total count",
+			"data":    nil,
+		})
 		return
 	}
 
 	// 获取分页数据
 	if err := query.Preload("User").Preload("Book").Offset(offset).Limit(limit).Order("create_time desc").Find(&comments).Error; err != nil {
-		logger.Errorf("获取评论列表失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评论列表失败"})
+		logger.Errorf("Failed to get comment list: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to get comment list",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "success",
-		"data": gin.H{
-			"comments": comments,
-			"total":    total,
-		},
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data":    comments,
 	})
 }
 
@@ -68,18 +73,27 @@ func DeleteComment(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的评论ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "Invalid comment ID",
+			"data":    nil,
+		})
 		return
 	}
 
 	if err := service.DB.Delete(&model.Comment{}, id).Error; err != nil {
-		logger.Errorf("删除评论失败: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除评论失败"})
+		logger.Errorf("Failed to delete comment: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "Failed to delete comment",
+			"data":    nil,
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "删除评论成功",
+		"code":    http.StatusOK,
+		"message": "succeed",
+		"data":    nil,
 	})
 }

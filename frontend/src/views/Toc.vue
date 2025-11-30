@@ -71,23 +71,50 @@
                 currentTheme === 'night' ? 'bg-[#2d2d2d] theme-border' :
                     currentTheme === 'eye-protect' ? 'bg-[#b3e5cc] theme-border' : 'bg-white']">
                 <h2 :class="['text-lg font-semibold mb-4',
-                    currentTheme === 'night' ? 'text-white' :
-                        currentTheme === 'eye-protect' ? 'text-[#333333]' : 'text-gray-800']">
-                    正文({{ chapters.length }})
+                    currentTheme === 'night' ? 'text-white' :currentTheme === 'eye-protect' ? 'text-[#333333]' : 'text-gray-500']">
+                    目录：
                 </h2>
                 <div class="space-y-2">
-                    <a v-for="(chapter, index) in chapters" :key="index" @click="goToChapter(index)" :class="['flex items-center justify-between cursor-pointer px-3 py-3 rounded transition-colors border',
+                    <a v-for="(chapter, pageIndex) in currentPageChapters" :key="pageIndex" @click="goToChapter((currentPage - 1) * pageSize + pageIndex)" :class="['flex items-center justify-between cursor-pointer px-3 py-3 rounded transition-colors border',
                         currentTheme === 'night' ?
                             'text-white hover:text-emerald-400 hover:bg-[#3d3d3d] border-[#404040]' :
                             currentTheme === 'eye-protect' ?
                                 'text-[#333333] hover:text-[#3d8766] hover:bg-[#a5d6a7] border-[#81c784]' :
                                 'text-gray-700 hover:text-emerald-600 hover:bg-gray-50 border-gray-100']">
-                        <span class="flex-grow truncate pr-2">{{ chapter.title }}</span>
+                        <span class="flex-grow truncate pr-2">第{{ numToChinese(chapter.chapterNo) }}章 {{ chapter.title }}</span>
                         <span
                             :class="['text-sm min-w-12 text-right', chapter.isVip ? 'text-red-500' : 'text-emerald-600']">
                             {{ chapter.isVip ? '[VIP]' : '[免费]' }}
                         </span>
                     </a>
+                </div>
+                
+                <!-- 小屏幕分页控件 -->
+                <div v-if="totalPages > 1" class="mt-6 flex justify-center items-center space-x-2">
+                    <button @click="prevPage" :disabled="currentPage === 1" 
+                        :class="['px-4 py-2 rounded-full text-sm', 
+                            currentTheme === 'night' ? 
+                                'bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50' :
+                                currentTheme === 'eye-protect' ?
+                                    'bg-green-100 text-green-800 hover:bg-green-200 disabled:opacity-50' :
+                                    'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50']">
+                        上一页
+                    </button>
+                    <span :class="['px-4 py-2 rounded-full text-sm font-medium', 
+                        currentTheme === 'night' ? 'bg-[#469b75] text-white' :
+                        currentTheme === 'eye-protect' ? 'bg-green-500 text-white' :
+                        'bg-[#469b75] text-white']">
+                        {{ currentPage }}/{{ totalPages }}
+                    </span>
+                    <button @click="nextPage" :disabled="currentPage === totalPages" 
+                        :class="['px-4 py-2 rounded-full text-sm', 
+                            currentTheme === 'night' ? 
+                                'bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50' :
+                                currentTheme === 'eye-protect' ?
+                                    'bg-green-100 text-green-800 hover:bg-green-200 disabled:opacity-50' :
+                                    'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50']">
+                        下一页
+                    </button>
                 </div>
             </div>
         </div>
@@ -128,31 +155,64 @@
                 <span>总字数：{{ bookData.wordCount }}</span>
             </div>
 
-            <h2 class="text-xl font-semibold text-gray-800 bg-gray-100 mb-6">正文(100)</h2>
+            <h2 class="text-xl font-semibold text-gray-500 bg-gray-100 mb-6">目录：</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
-                <a v-for="(chapter, index) in chapters" :key="index" @click="goToChapter(index)" :class="['flex items-center justify-between cursor-pointer px-3 py-2 rounded transition-colors',
+            <div class="grid grid-cols-1 md:grid-cols-2  gap-x-6 gap-y-3">
+                <a v-for="(chapter, pageIndex) in currentPageChapters" :key="pageIndex" @click="goToChapter((currentPage - 1) * pageSize + pageIndex)" :class="['flex items-center justify-between cursor-pointer pl-0 pr-3 py-2 rounded transition-colors',
                     currentTheme === 'night' ?
                         'text-white hover:text-emerald-400 hover:bg-gray-800' :
                         currentTheme === 'eye-protect' ?
                             'text-[#333333] hover:text-[#3d8766] hover:bg-[#a5d6a7]' :
                             'text-gray-700 hover:text-emerald-600 hover:bg-gray-50']">
-                    <span class="flex-grow truncate pr-2">{{ chapter.title }}</span>
+                    <span class="flex-grow truncate  pr-2">第{{ numToChinese(chapter.chapterNo) }}章 {{ chapter.title }}</span>
                     <span :class="['text-sm min-w-16 text-right', chapter.isVip ? 'text-red-500' : 'text-emerald-600']">
                         {{ chapter.isVip ? '[VIP]' : '[免费]' }}
                     </span>
                 </a>
+            </div>
+            
+            <!-- 大屏幕分页控件 -->
+            <div v-if="totalPages > 1" class="mt-8 flex justify-center items-center space-x-4">
+                <button @click="prevPage" :disabled="currentPage === 1" 
+                    class="px-6 py-2 rounded-md shadow-sm text-sm font-medium transition-colors bg-[#469b75] text-white hover:bg-[#3d8766] disabled:opacity-50">
+                    上一页
+                </button>
+                
+                <!-- 页码按钮，只显示当前页前后各3页 -->
+                <template v-for="page in visiblePages" :key="page">
+                    <button v-if="page === '...'" disabled 
+                        class="px-4 py-2 rounded-md text-sm text-gray-500">
+                        {{ page }}
+                    </button>
+                    <button v-else @click="goToPage(page)" 
+                        :class="['px-4 py-2 rounded-md shadow-sm text-sm font-medium transition-colors', 
+                            page === currentPage ? 
+                                'bg-[#469b75] text-white' : 
+                                'bg-white text-gray-700 hover:bg-gray-50']">
+                        {{ page }}
+                    </button>
+                </template>
+                
+                <button @click="nextPage" :disabled="currentPage === totalPages" 
+                    class="px-6 py-2 rounded-md shadow-sm text-sm font-medium transition-colors bg-[#469b75] text-white hover:bg-[#3d8766] disabled:opacity-50">
+                    下一页
+                </button>
+                
+                <div class="ml-4 text-sm text-gray-600">
+                    共 {{ totalPages }} 页，当前第 {{ currentPage }} 页
+                </div>
             </div>
         </main>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Header from '@/components/Header.vue';
 import ToolBar from '@/components/ToolBar.vue';
 import { bookAPI } from '@/api/services';
+import { numToChinese } from '../utils/tiny';
 
 const route = useRoute();
 const router = useRouter();
@@ -171,6 +231,84 @@ const breadcrumb = ref({
 // 书籍数据
 const bookData = ref({});
 const chapters = ref([]);
+// 分页相关状态
+const currentPage = ref(1);
+const pageSize = ref(60);
+
+// 计算当前页显示的章节
+const currentPageChapters = computed(() => {
+    const start = (currentPage.value - 1) * pageSize.value;
+    const end = start + pageSize.value;
+    return chapters.value.slice(start, end);
+});
+
+// 计算总页数
+const totalPages = computed(() => {
+    const total = Math.ceil(chapters.value.length / pageSize.value);
+    console.log('总页数:', total);
+    return total;
+});
+
+// 计算可见页码，显示当前页前后各3页
+const visiblePages = computed(() => {
+    const pages = [];
+    const total = totalPages.value;
+    const current = currentPage.value;
+    
+    if (total <= 7) {
+        // 总页数小于等于7，显示所有页码
+        for (let i = 1; i <= total; i++) {
+            pages.push(i);
+        }
+    } else {
+        // 总页数大于7，显示当前页前后各3页，其余用省略号
+        if (current <= 4) {
+            // 当前页在1-4之间，显示1-7页
+            for (let i = 1; i <= 5; i++) {
+                pages.push(i);
+            }
+            pages.push('...');
+            pages.push(total);
+        } else if (current >= total - 3) {
+            // 当前页在最后4页，显示最后7页
+            pages.push(1);
+            pages.push('...');
+            for (let i = total - 4; i <= total; i++) {
+                pages.push(i);
+            }
+        } else {
+            // 当前页在中间，显示前后各3页
+            pages.push(1);
+            pages.push('...');
+            for (let i = current - 2; i <= current + 2; i++) {
+                pages.push(i);
+            }
+            pages.push('...');
+            pages.push(total);
+        }
+    }
+    
+    return pages;
+});
+
+// 切换到指定页
+const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+        // 滚动到顶部
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+};
+
+// 上一页
+const prevPage = () => {
+    goToPage(currentPage.value - 1);
+};
+
+// 下一页
+const nextPage = () => {
+    goToPage(currentPage.value + 1);
+};
 
 // 小屏幕相关方法
 const goBack = () => {
@@ -200,7 +338,7 @@ const scrollToBottom = () => {
 const goToChapter = (index) => {
     // 使用章节的实际ID，不再构建模拟的chapterId
     const chapter = chapters.value[index];
-    router.push(`/book/${bookData.value.id}/${chapter.chapterId}`);
+    router.push(`/book/${bookData.value.id}/${chapter.chapterNo}`);
 };
 
 // 滚动监听处理函数
@@ -232,7 +370,7 @@ onMounted(async () => {
 
         // 从API获取章节列表
         const chaptersResponse = await bookAPI.getChapters(bookId);
-        chapters.value = chaptersResponse.data;
+        chapters.value = chaptersResponse?.data?.chapters || [];
     } catch (error) {
         console.error('获取书籍或章节数据失败:', error);
     }
@@ -252,6 +390,10 @@ watch(
 const fetchBookData = async () => {
     const bookId = route.params.bookId;
     try {
+        // 先重置状态
+        chapters.value = [];
+        currentPage.value = 1;
+        
         // 从API获取书籍详情
         const bookResponse = await bookAPI.getById(bookId);
         bookData.value = bookResponse.data;
@@ -261,7 +403,11 @@ const fetchBookData = async () => {
 
         // 从API获取章节列表
         const chaptersResponse = await bookAPI.getChapters(bookId);
-        chapters.value = chaptersResponse.data;
+        // 使用响应式的方式更新chapters数组
+        chapters.value = chaptersResponse?.data?.chapters || [];
+        
+        console.log('章节数据已加载，共', chapters.value.length, '章');
+        console.log('计算得到的总页数:', totalPages.value);
     } catch (error) {
         console.error('获取书籍或章节数据失败:', error);
     }

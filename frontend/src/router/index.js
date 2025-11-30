@@ -63,7 +63,7 @@ const routes = [
     component: Cover,
   },
   {
-    path: "/book/:bookId/:chapterId",
+    path: "/book/:bookId/:chapterNo",
     name: "book",
     component: Book,
   },
