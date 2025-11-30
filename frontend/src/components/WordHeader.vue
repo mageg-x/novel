@@ -39,7 +39,7 @@ function onClose() {
   z-index: 9999;
 }
 .word-header-title[data-v-3fda83c4] {
-  background: url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/top2.95b18e3.png) no-repeat;
+  background: url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/top2.webp) no-repeat;
   background-size: contain;
   height: 32px;
   left: 50%;
@@ -56,45 +56,45 @@ function onClose() {
   justify-content: space-between;
 }
 .word-header-top-l[data-v-3fda83c4] {
-  background: url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/top1.ea88a28.jpg) no-repeat;
+  background: url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/top1.webp) no-repeat;
   background-size: auto 100%;
   height: 100%;
   width: 738px;
 }
 .word-header-top-r[data-v-3fda83c4] {
-  background: url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/top3.41cd289.jpg) no-repeat;
+  background: url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/top3.webp) no-repeat;
   background-size: auto 100%;
   height: 100%;
   width: 213px;
 }
 .word-header-bottom[data-v-3fda83c4] {
   align-items: center;
-  background: url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/bottom3.92c1038.png);
+  background: url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/bottom3.webp);
   display: flex;
   height: 114px;
   justify-content: space-between;
 }
 .word-header-bottom-l[data-v-3fda83c4] {
-  background: url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/bottom1.c397253.jpg) no-repeat;
+  background: url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/bottom1.webp) no-repeat;
   background-size: auto 100%;
   height: 100%;
   width: 801px;
 }
 .word-header-bottom-m[data-v-3fda83c4] {
   flex: 1;
-  background: url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/bottom2.fdaa13b.jpg) no-repeat;
+  background: url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/bottom2.webp) no-repeat;
   background-size: auto 100%;
   height: 100%;
 }
 .word-header-bottom-r[data-v-3fda83c4] {
-  background: url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/bottom4.2f5a94a.jpg) no-repeat;
+  background: url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/bottom4.webp) no-repeat;
   background-size: auto 100%;
   height: 100%;
   position: relative;
   width: 287px;
 }
 .word-header .exit[data-v-3fda83c4] {
-  background: url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/exit.ba0d295.png) no-repeat;
+  background: url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/exit.webp) no-repeat;
   background-size: 29px 29px;
   color: #444;
   cursor: pointer;

@@ -75,7 +75,7 @@ function handleNextClick() {
 /* 保留原始样式并添加新样式 */
 .word-footer[data-v-53a0721a] {
   justify-content: space-between;
-  background: #efefef url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/footer3.9ce62f7.jpg);
+  background: #efefef url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/footer3.webp);
   bottom: 0;
   display: flex;
   height: 27px;
@@ -84,7 +84,7 @@ function handleNextClick() {
   z-index: 9999;
 }
 .word-footer-l[data-v-53a0721a] {
-  background: url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/footer1.96da401.jpg) no-repeat;
+  background: url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/footer1.webp) no-repeat;
   background-size: auto 100%;
   height: 100%;
   width: 322px;
@@ -115,7 +115,7 @@ function handleNextClick() {
   width: 40px;
 }
 .word-footer-r[data-v-53a0721a] {
-  background: url(//qqreader-site-1252317822.file.myqcloud.com/qq-pc/static/img/footer2.2fce3c9.png) no-repeat;
+  background: url(https://fastly.jsdelivr.net/gh/mageg-x/novel/frontend/src/assets/footer2.webp) no-repeat;
   height: 100%;
   width: 344px;
 }
