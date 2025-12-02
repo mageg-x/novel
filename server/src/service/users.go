@@ -2,13 +2,30 @@ package service
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/mageg-x/novel/src/model"
 )
 
+var (
+	instUser *UserService
+	muUser   sync.RWMutex
+)
+
 // 用户服务
 type UserService struct{}
+
+func GetUserService() *UserService {
+	muUser.Lock()
+	defer muUser.Unlock()
+	if instUser == nil {
+		if instUser == nil {
+			instUser = &UserService{}
+		}
+	}
+	return instUser
+}
 
 // 用户登录
 func (s *UserService) Login(username, password string) (*model.User, error) {

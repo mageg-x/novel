@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	bs     = &service.BookService{}
-	us     = &service.UserService{}
+	bs     = service.GetBookService()
+	us     = service.GetUserService()
 	ss     = service.SService
 	logger = log.GetLogger("novel")
 )

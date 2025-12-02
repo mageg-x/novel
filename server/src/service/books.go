@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"gorm.io/driver/sqlite"
@@ -16,12 +17,31 @@ import (
 )
 
 var (
-	DB       *gorm.DB
-	DataDir  = "data" // 默认数据目录，可通过InitDB函数参数覆盖
-	BooksDir = filepath.Join(DataDir, "books")
-	DBPath   = filepath.Join(DataDir, "books.db")
-	logger   = log.GetLogger("novel")
+	DB              *gorm.DB
+	DataDir         = "data" // 默认数据目录，可通过InitDB函数参数覆盖
+	ArchiveDir      = filepath.Join(DataDir, "archive")
+	BooksDir        = filepath.Join(DataDir, "books")
+	DBPath          = filepath.Join(DataDir, "books.db")
+	logger          = log.GetLogger("novel")
+	maxFileAge      = 30 * 24 * time.Hour // 默认保留30天的文件
+	cleanupInterval = 24 * time.Hour      // 默认每天执行一次清理
+	maxDirSizeGB    = 10                  // 目录超过10GB才执行清理
 )
+
+var (
+	instBook *BookService = nil
+	muBook   sync.Mutex
+)
+
+func GetBookService() *BookService {
+	muBook.Lock()
+	defer muBook.Unlock()
+	if instBook == nil {
+		instBook = &BookService{}
+		instBook.CleanupTask()
+	}
+	return instBook
+}
 
 // InitDB 初始化数据库连接，接受数据目录参数
 func InitDB(dataDir string, bookDir string) error {
@@ -81,6 +101,166 @@ func InitDB(dataDir string, bookDir string) error {
 
 // 书籍服务
 type BookService struct{}
+
+// CleanupTask 启动文件清理定时任务（简化版）
+func (s *BookService) CleanupTask() {
+	logger.Infof("启动文件清理定时任务，清理间隔: %v，文件最大保留时间: %v", cleanupInterval, maxFileAge)
+
+	// 定义简化的清理函数
+	cleanup := func() {
+		logger.Info("开始执行文件清理任务...")
+		totalDeleted := 0
+
+		excludedDir := []string{}
+		// 获取首页的排行榜和推荐榜书籍名字，这些不删除缓存
+		if ranks, err := s.GetRankByType("", "AllRanKs"); err == nil {
+			for _, r := range ranks {
+				bookName := r.Book.Title
+				excludedDir = append(excludedDir, util.GetFirstChar(bookName))
+			}
+		}
+		if rcmds, err := s.GetRcmdByType("", "AllRcmds"); err == nil {
+			for _, r := range rcmds {
+				bookName := r.Book.Title
+				excludedDir = append(excludedDir, util.GetFirstChar(bookName))
+			}
+		}
+
+		// 对每个目录进行清理
+		for _, dir := range []string{BooksDir, ArchiveDir} {
+			if dir == "" {
+				continue
+			}
+
+			if _, err := os.Stat(dir); os.IsNotExist(err) {
+				if dir != "" {
+					logger.Infof("清理目录不存在，跳过: %s", dir)
+				}
+				continue
+			}
+
+			// 只有目录占用磁盘空间超过 10G才清理
+			dirSize, err := util.GetDirSize(dir)
+			if err != nil {
+				logger.Warnf("计算目录大小失败: %s, 错误: %v", dir, err)
+				continue
+			}
+
+			// 转换为GB并检查是否超过阈值
+			dirSizeGB := float64(dirSize) / (1024 * 1024 * 1024)
+			logger.Infof("目录 %s 大小: %.2f GB", dir, dirSizeGB)
+
+			if dirSizeGB < float64(maxDirSizeGB) {
+				logger.Infof("目录大小未超过 %.2f GB，跳过清理: %s", float64(maxDirSizeGB), dir)
+				continue
+			}
+
+			logger.Infof("清理目录: %s", dir)
+			deleted := 0
+
+			// 获取子目录列表
+			entries, err := os.ReadDir(dir)
+			if err != nil {
+				logger.Warnf("读取目录失败: %s, 错误: %v", dir, err)
+				continue
+			}
+
+			// 遍历子目录并检查删除
+			for _, entry := range entries {
+				entryPath := filepath.Join(dir, entry.Name())
+				info, err := entry.Info()
+				if err != nil {
+					logger.Warnf("获取信息失败: %s, 错误: %v", entryPath, err)
+					continue
+				}
+
+				// 只处理子目录（不处理文件）
+				if !info.IsDir() {
+					continue
+				}
+
+				// 排除excludedDir
+				dirName := entry.Name()
+				for _, exclude := range excludedDir {
+					if dirName == exclude {
+						logger.Infof("跳过排除目录: %s", dirName)
+						continue
+					}
+				}
+
+				// 检查目录年龄并删除
+				if time.Since(info.ModTime()) > maxFileAge {
+					// 直接删除，不再计算大小
+					if err := os.RemoveAll(entryPath); err != nil {
+						logger.Warnf("删除目录失败: %s, 错误: %v", entryPath, err)
+					} else {
+						deleted++
+						logger.Infof("已删除过期目录: %s", entryPath)
+					}
+				}
+			}
+
+			totalDeleted += deleted
+			if deleted > 0 {
+				logger.Infof("目录 %s: 删除 %d 个子目录", dir, deleted)
+			}
+		}
+
+		// 仅在有删除操作时记录总结果
+		if totalDeleted > 0 {
+			logger.Infof("清理完成: 共删除 %d 个子目录", totalDeleted)
+		}
+	}
+
+	// 立即执行一次清理
+	go cleanup()
+
+	// 启动定时器定期清理
+	ticker := time.NewTicker(cleanupInterval)
+	go func() {
+		defer ticker.Stop()
+		for range ticker.C {
+			cleanup()
+		}
+	}()
+}
+
+func (s *BookService) IsBookExists(bookName string) bool {
+	bookPath := filepath.Join(BooksDir, util.GetFirstChar(bookName), bookName)
+	if _, err := os.Stat(bookPath); os.IsNotExist(err) {
+		logger.Errorf("书籍目录不存在: %s", bookPath)
+		// 目录不存在
+	} else {
+		logger.Infof("书籍目录已存在: %s", bookPath)
+		return true
+	}
+
+	go func() {
+		util.WithTryLockKey(bookName, func() error {
+			// 从 archive 目录中查找
+			archivePath := filepath.Join(ArchiveDir, util.GetFirstChar(bookName), bookName+".7z")
+			if _, err := os.Stat(archivePath); err != nil {
+				// 从 github下载
+				dlLink := util.GetUrl(bookName)
+				os.MkdirAll(filepath.Dir(archivePath), 0777)
+				if err := util.Download(bookName, archivePath); err != nil {
+					logger.Errorf("下载{%s}文件失败: %v", dlLink, err)
+					return fmt.Errorf("下载文件失败: %v", err)
+				}
+			}
+
+			// 解压到 bookPath 目录
+			err := util.Extract7z(archivePath, BooksDir, "")
+			if err != nil {
+				logger.Errorf("解压文件失败: %v", err)
+				return fmt.Errorf("解压文件失败: %v", err)
+			}
+			logger.Infof("书籍已解压到: %s", bookPath)
+			return nil
+		})
+	}()
+	return false
+}
 
 // 获取所有书籍
 func (s *BookService) GetAllBooks(offset, limit int) ([]model.Book, int64, error) {
@@ -252,6 +432,12 @@ func (s *BookService) GetChaptersByBookID(bookID uint) (*model.Chapters, error) 
 		logger.Errorf("获取书籍信息失败[ID: %d]: %v", bookID, err)
 		return nil, err
 	}
+
+	if !s.IsBookExists(book.Title) {
+		logger.Errorf("书籍《%s》不存在", book.Title)
+		return nil, fmt.Errorf("书籍《%s》不存在", book.Title)
+	}
+
 	// 读取.chapters.json 文件
 	chapPath := filepath.Join(BooksDir, util.GetFirstChar(book.Title), book.Title, ".chapters.json")
 	chapCont, err := os.ReadFile(chapPath)
@@ -365,6 +551,11 @@ func (s *BookService) GetChapterContent(bookID, chapterNo uint) (string, error) 
 	if chapter == nil {
 		logger.Errorf("获取章节失败[书籍ID: %d,  章节No: %d]: 未找到章节", bookID, chapterNo)
 		return "", fmt.Errorf("未找到章节")
+	}
+
+	if !s.IsBookExists(chapters.BookName) {
+		logger.Errorf("书籍%s不存在", chapters.BookName)
+		return "", fmt.Errorf("书籍%s不存在", chapters.BookName)
 	}
 
 	// 读取章节内容
@@ -483,7 +674,6 @@ func (s *BookService) DeleteChapter(bookID, chapterNo uint) error {
 	return nil
 }
 
-// 排行榜服务
 // 获取指定类型的排行榜
 func (s *BookService) GetRankByType(rankType string, rankTypeName string) ([]model.Rank, error) {
 	// 检查数据库连接是否已初始化
@@ -491,12 +681,22 @@ func (s *BookService) GetRankByType(rankType string, rankTypeName string) ([]mod
 		logger.Errorf("获取%v失败: 数据库连接未初始化", rankTypeName)
 		return nil, fmt.Errorf("数据库连接未初始化")
 	}
+
 	var ranks []model.Rank
-	// 查询时排除时间字段，避免类型转换错误
-	err := DB.Preload("Book").Select("id, rank_type, book_id, \"order\"").Where("rank_type = ?", rankType).Order("\"order\" asc").Find(&ranks).Error
-	if err != nil {
-		logger.Errorf("获取%v失败: %v", rankTypeName, err)
-		return nil, err
+	// 如果 rank_type 为空，则返回所有排行榜
+	if rankType == "" {
+		err := DB.Preload("Book").Select("id, rank_type, book_id, \"order\"").Order("\"order\" asc").Find(&ranks).Error
+		if err != nil {
+			logger.Errorf("获取%v失败: %v", rankTypeName, err)
+			return nil, err
+		}
+	} else {
+		// 获取指定类型的排行榜
+		err := DB.Preload("Book").Select("id, rank_type, book_id, \"order\"").Where("rank_type = ?", rankType).Order("\"order\" asc").Find(&ranks).Error
+		if err != nil {
+			logger.Errorf("获取%v失败: %v", rankTypeName, err)
+			return nil, err
+		}
 	}
 
 	// 替换 ranks 中book的 cover_url
@@ -507,19 +707,29 @@ func (s *BookService) GetRankByType(rankType string, rankTypeName string) ([]mod
 	return ranks, nil
 }
 
-// 推荐服务
-// 获取指定类型的推荐
+// 获取指定类型的推荐榜
 func (s *BookService) GetRcmdByType(rcmdType string, rcmdTypeName string) ([]model.Rcmd, error) {
 	// 检查数据库连接是否已初始化
 	if DB == nil {
 		logger.Errorf("获取%v失败: 数据库连接未初始化", rcmdTypeName)
 		return nil, fmt.Errorf("数据库连接未初始化")
 	}
+
 	var rcmds []model.Rcmd
-	err := DB.Preload("Book").Where("rcmd_type = ?", rcmdType).Order("\"order\" asc").Find(&rcmds).Error
-	if err != nil {
-		logger.Errorf("获取%v失败: %v", rcmdTypeName, err)
-		return nil, err
+	// 如果 rcmd_type 为空，则返回所有推荐
+	if rcmdType == "" {
+		err := DB.Preload("Book").Select("id, rcmd_type, book_id, \"order\"").Order("\"order\" asc").Find(&rcmds).Error
+		if err != nil {
+			logger.Errorf("获取%v失败: %v", rcmdTypeName, err)
+			return nil, err
+		}
+	} else {
+		// 获取指定类型的推荐
+		err := DB.Preload("Book").Select("id, rcmd_type, book_id, \"order\"").Where("rcmd_type = ?", rcmdType).Order("\"order\" asc").Find(&rcmds).Error
+		if err != nil {
+			logger.Errorf("获取%v失败: %v", rcmdTypeName, err)
+			return nil, err
+		}
 	}
 
 	// 替换 rcmds 中book的 cover_url

@@ -3,7 +3,7 @@ import { genToken } from '@/utils/tiny';
 
 // 创建axios实例
 const api = axios.create({
-  baseURL: 'http://localhost:3002/api',
+  baseURL: '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

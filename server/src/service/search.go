@@ -25,8 +25,7 @@ import (
 var (
 	jieba    *gojieba.Jieba
 	SService *SearchService
-	// 使用读写锁代替互斥锁，允许多个读操作同时进行
-	mu = sync.RWMutex{}
+	muSS     = sync.RWMutex{}
 )
 
 // SearchService 搜索服务结构体
@@ -89,8 +88,8 @@ func (s *SearchService) InitSearch() error {
 	os.MkdirAll(s.indexDir, 0755)
 
 	go func() {
-		mu.Lock()
-		defer mu.Unlock()
+		muSS.Lock()
+		defer muSS.Unlock()
 		logger.Infof("正在初始化书籍索引索引目录: %s", s.indexDir)
 		if err := s.initBookIndex(); err != nil {
 			logger.Errorf("初始化书籍索引失败: %w", err)
@@ -150,10 +149,10 @@ func (s *SearchService) ListenEvents() {
 
 func (s *SearchService) handleModelUpdate(event model.ModelEvent) {
 	// 使用写锁进行模型更新
-	if !mu.TryLock() {
+	if !muSS.TryLock() {
 		return
 	}
-	defer mu.Unlock()
+	defer muSS.Unlock()
 
 	switch event.ModelType {
 	case "user":
@@ -176,10 +175,10 @@ func (s *SearchService) handleModelUpdate(event model.ModelEvent) {
 
 func (s *SearchService) handleModelDelete(event model.ModelEvent) {
 	// 使用写锁进行模型删除
-	if !mu.TryLock() {
+	if !muSS.TryLock() {
 		return
 	}
-	defer mu.Unlock()
+	defer muSS.Unlock()
 	switch event.ModelType {
 	case "user":
 		s.DeleteUserIndex(event.ModelID)
@@ -928,11 +927,11 @@ func (s *SearchService) SearchBooks(query string, limit, offset int) ([]model.Bo
 	}
 
 	// 使用读锁进行搜索操作，允许与其他读操作并发
-	if !mu.TryRLock() {
+	if !muSS.TryRLock() {
 		logger.Error("服务太忙")
 		return nil, 0, fmt.Errorf("服务太忙")
 	}
-	defer mu.RUnlock()
+	defer muSS.RUnlock()
 
 	matchPhraseQuery := bleve.NewMatchPhraseQuery(query)
 
@@ -967,11 +966,11 @@ func (s *SearchService) SearchUsers(query string, limit, offset int) ([]model.Us
 	}
 
 	// 使用读锁进行搜索操作
-	if !mu.TryRLock() {
+	if !muSS.TryRLock() {
 		logger.Error("服务太忙")
 		return nil, 0, fmt.Errorf("服务太忙")
 	}
-	defer mu.RUnlock()
+	defer muSS.RUnlock()
 
 	// 电话号码支持部分匹配
 	if isNumeric(query) {
@@ -1009,11 +1008,11 @@ func (s *SearchService) SearchComments(query string, limit, offset int) ([]model
 	}
 
 	// 使用读锁进行搜索操作
-	if !mu.TryRLock() {
+	if !muSS.TryRLock() {
 		logger.Error("服务太忙")
 		return nil, 0, fmt.Errorf("服务太忙")
 	}
-	defer mu.RUnlock()
+	defer muSS.RUnlock()
 
 	searchRequest := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
 	searchRequest.From = offset

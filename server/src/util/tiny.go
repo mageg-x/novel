@@ -1,6 +1,8 @@
 package util
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
 )
@@ -61,4 +63,32 @@ func GetFirstChar(dirname string) string {
 
 	// 理论上不会走到这里，但为了安全返回 "_"
 	return "_"
+}
+
+// GetDirSize 计算目录的总大小（以字节为单位），优化支持多级目录
+func GetDirSize(path string) (int64, error) {
+	var size int64
+	// 使用filepath.WalkDir替代Walk，性能更好且内存占用更低
+	err := filepath.WalkDir(path, func(path string, entry os.DirEntry, err error) error {
+		// 如果访问当前路径出错，记录错误但继续遍历（跳过这个路径）
+		if err != nil {
+			return filepath.SkipDir
+		}
+
+		// 检查是否为符号链接，如果是则跳过（避免循环引用）
+		if entry.Type()&os.ModeSymlink != 0 {
+			return nil
+		}
+
+		// 如果是文件，累加其大小
+		if !entry.IsDir() {
+			info, err := entry.Info()
+			if err != nil {
+				return nil // 忽略无法获取信息的文件
+			}
+			size += info.Size()
+		}
+		return nil
+	})
+	return size, err
 }
